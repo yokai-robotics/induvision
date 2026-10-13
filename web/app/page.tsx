@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { LanguageSwitcher, useTranslation } from "../i18n/LanguageProvider";
+import { LOCALE_KEY, translate, type Translator } from "../i18n/translations";
 import {
   Activity,
   Aperture,
@@ -22,7 +24,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { cameraMegapixels, filterCameras, formatNumber, objectPixelsAtDistance, rankConfigurations, simulateConfiguration } from "./calculations";
+import { cameraMegapixels, filterCameras, objectPixelsAtDistance, rankConfigurations, simulateConfiguration } from "./calculations";
 import { initialStudyConfig } from "./data";
 import { Camera, Lens, NumericValue, Study, StudyConfig } from "./types";
 import catalog from "../data/catalog.generated.json";
@@ -213,6 +215,7 @@ function networkThroughput(params: { width: NumericValue; height: NumericValue; 
 }
 
 export default function Home() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>("study");
   const [studies, setStudies] = useState<Study[]>([]);
   const [activeStudyId, setActiveStudyId] = useState("");
@@ -249,7 +252,9 @@ export default function Home() {
   );
   useEffect(() => {
     let nextStudies: Study[] = [];
+    let newStudyName = "Nouvelle étude";
     try {
+      newStudyName = translate(window.localStorage.getItem(LOCALE_KEY) === "en" ? "en" : "fr", "Nouvelle étude");
       storageSnapshot.current = window.localStorage.getItem(STUDIES_KEY);
       nextStudies = storageSnapshot.current === null ? [] : parseStudies(storageSnapshot.current);
       const repaired = nextStudies.map((item) => repairReferences(item, cameras, lenses));
@@ -260,7 +265,7 @@ export default function Home() {
     } catch {
       setDataStatus("Les études locales sont illisibles ou le stockage est indisponible. Les données existantes sont conservées. Tu peux travailler et exporter ton étude, mais l’enregistrement local est désactivé.");
     }
-    const firstStudy = nextStudies[0] ?? repairReferences({ ...createDefaultStudy(), id: crypto.randomUUID() }, cameras, lenses);
+    const firstStudy = nextStudies[0] ?? repairReferences({ ...createDefaultStudy(newStudyName), id: crypto.randomUUID() }, cameras, lenses);
     setStudies(nextStudies.length ? nextStudies : [firstStudy]);
     setActiveStudyId(firstStudy.id);
     setStudy(firstStudy);
@@ -333,7 +338,7 @@ export default function Home() {
   }
 
   function createStudy() {
-    const nextStudy = repairReferences({ ...createDefaultStudy(`Étude ${studies.length + 1}`), id: crypto.randomUUID(), createdAt: new Date().toISOString() }, cameras, lenses);
+    const nextStudy = repairReferences({ ...createDefaultStudy(t("Étude {number}", { number: studies.length + 1 })), id: crypto.randomUUID(), createdAt: new Date().toISOString() }, cameras, lenses);
     if (!persist([nextStudy, ...studies])) return;
     setActiveStudyId(nextStudy.id); setStudy(nextStudy);
     setSelectedCameraId(nextStudy.selectedCameraId ?? ""); setSelectedLensId(nextStudy.selectedLensId ?? "");
@@ -351,7 +356,7 @@ export default function Home() {
   function deleteStudy() {
     const remaining = studies.filter((item) => item.id !== study.id);
     if (!persist(remaining)) return;
-    const nextStudy = remaining[0] ?? repairReferences({ ...createDefaultStudy(), id: crypto.randomUUID() }, cameras, lenses);
+    const nextStudy = remaining[0] ?? repairReferences({ ...createDefaultStudy(t("Nouvelle étude")), id: crypto.randomUUID() }, cameras, lenses);
     setActiveStudyId(nextStudy.id); setStudy(nextStudy);
     setSelectedCameraId(nextStudy.selectedCameraId ?? ""); setSelectedLensId(nextStudy.selectedLensId ?? "");
   }
@@ -373,49 +378,53 @@ export default function Home() {
 
   return (
     <div className={cx("app-shell", activeTab === "study" && "has-study-actions")}>
-      <a className="skip-link" href="#main">Aller au contenu</a>
+      <a className="skip-link" href="#main">{t("Aller au contenu")}</a>
       <header className="site-header">
-        <Link className="brand" href="/" aria-label="InduVision, accueil">
+        <Link className="brand" href="/" aria-label={t("InduVision, accueil")}>
           <span className="brand-mark" aria-hidden="true"><ScanLine size={32} strokeWidth={1.6} /></span>
           <span className="brand-text">
             <span className="brand-name">InduVision</span>
-            <span className="brand-mantra">Outil d'aide pour la Vision</span>
+            <span className="brand-mantra">{t("Outil d'aide pour la Vision")}</span>
           </span>
         </Link>
-        <nav className="site-nav" aria-label="Navigation principale">
-          <NavButton icon={<Activity size={17} />} label="Étude" active={activeTab === "study"} onClick={() => setActiveTab("study")} />
-          <NavButton icon={<CameraIcon size={17} />} label="Caméras" active={activeTab === "cameras"} onClick={() => setActiveTab("cameras")} />
-          <NavButton icon={<Aperture size={17} />} label="Objectifs" active={activeTab === "lenses"} onClick={() => setActiveTab("lenses")} />
-          <NavButton icon={<Network size={17} />} label="Réseau GigE" active={activeTab === "network"} onClick={() => setActiveTab("network")} />
+        <nav className="site-nav" aria-label={t("Navigation principale")}>
+          <NavButton icon={<Activity size={17} />} label={t("Étude")} active={activeTab === "study"} onClick={() => setActiveTab("study")} />
+          <NavButton icon={<CameraIcon size={17} />} label={t("Caméras")} active={activeTab === "cameras"} onClick={() => setActiveTab("cameras")} />
+          <NavButton icon={<Aperture size={17} />} label={t("Objectifs")} active={activeTab === "lenses"} onClick={() => setActiveTab("lenses")} />
+          <NavButton icon={<Network size={17} />} label={t("Réseau GigE")} active={activeTab === "network"} onClick={() => setActiveTab("network")} />
         </nav>
-        <a className="github-link" href="https://github.com/" target="_blank" rel="noopener noreferrer"><Github size={16} aria-hidden="true" />GitHub</a>
+        <div className="header-actions">
+          <a className="github-link" href="https://github.com/" target="_blank" rel="noopener noreferrer"><Github size={16} aria-hidden="true" />GitHub</a>
+          <LanguageSwitcher />
+        </div>
       </header>
 
       <main id="main" className="page-container" tabIndex={-1}>
         <header className="page-intro">
           <div className="intro-copy">
-            <p className={ui.eyebrow}>{activeTab === "study" ? "Outil de dimensionnement en vision industrielle" : activeTab === "network" ? "Dimensionner l’acquisition" : "Le catalogue technique"}</p>
+            <p className={ui.eyebrow}>{activeTab === "study" ? t("Outil de dimensionnement en vision industrielle") : activeTab === "network" ? t("Dimensionner l’acquisition") : t("Le catalogue technique")}</p>
             <h1 className="page-title">
-              {activeTab === "study" ? "Choisissez votre caméra et votre objectif" : activeTab === "cameras" ? "Annuaire caméras" : activeTab === "lenses" ? "Annuaire objectifs" : "Calcul réseau GigE"}
+              {activeTab === "study" ? t("Choisissez votre caméra et votre objectif") : activeTab === "cameras" ? t("Annuaire caméras") : activeTab === "lenses" ? t("Annuaire objectifs") : t("Calcul réseau GigE")}
             </h1>
             <p className="intro-description">
-              {activeTab === "study" ? "Renseignez la zone à observer, la taille des détails à détecter et la distance de prise de vue. Comparez les couples caméra–objectif et vérifiez le champ couvert, la résolution et le flou de mouvement pour votre application." : activeTab === "cameras" ? "Résolution, capteur, cadence : explorez les caractéristiques pour choisir une caméra adaptée à votre application." : activeTab === "lenses" ? "Focale, format et distance de travail : trouvez l’optique qui correspond à votre capteur." : "Estimez le débit de vos caméras et choisissez une liaison réseau adaptée à votre acquisition."}
+              {activeTab === "study" ? t("Renseignez la zone à observer, la taille des détails à détecter et la distance de prise de vue. Comparez les couples caméra–objectif et vérifiez le champ couvert, la résolution et le flou de mouvement pour votre application.") : activeTab === "cameras" ? t("Résolution, capteur, cadence : explorez les caractéristiques pour choisir une caméra adaptée à votre application.") : activeTab === "lenses" ? t("Focale, format et distance de travail : trouvez l’optique qui correspond à votre capteur.") : t("Estimez le débit de vos caméras et choisissez une liaison réseau adaptée à votre acquisition.")}
             </p>
           </div>
-          <div className="catalog-metrics" aria-label="Votre espace et le catalogue">
-            <Metric label="Études" value={studies.length.toString()} />
-            <Metric label="Caméras" value={cameras.length.toString()} />
-            <Metric label="Objectifs" value={lenses.length.toString()} />
+          <div className="catalog-metrics" aria-label={t("Votre espace et le catalogue")}>
+            <Metric label={t("Études")} value={studies.length.toString()} />
+            <Metric label={t("Caméras")} value={cameras.length.toString()} />
+            <Metric label={t("Objectifs")} value={lenses.length.toString()} />
           </div>
         </header>
 
         {activeTab === "study" && (
           <section className="study-storage">
-            <div className="storage-copy"><span className="storage-icon" aria-hidden="true"><CheckCircle2 size={20} /></span><p className="m-0 text-sm text-muted" role="status">{dataStatus}</p></div>
+            <div className="storage-copy"><span className="storage-icon" aria-hidden="true"><CheckCircle2 size={20} /></span><p className="m-0 text-sm text-muted" role="status">{t(dataStatus)}</p></div>
             <div className="min-w-0">
-              <label className="grid gap-1 text-xs font-semibold text-muted">
-                Importer des études JSON
-                <input className="w-full min-w-0 max-w-full text-xs file:mr-2 file:min-h-10 file:rounded-md file:border file:border-line file:bg-paper file:px-3 file:font-bold" aria-label="Importer des études JSON" type="file" accept="application/json,.json" disabled={!storageReady} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void importStudies(file); }} />
+              <label className={cx("import-control grid gap-2 text-xs font-semibold text-muted", !storageReady && "cursor-not-allowed opacity-45")}>
+                <span>{t("Importer des études JSON")}</span>
+                <span className="cta cta-secondary cursor-pointer" aria-hidden="true">{t("Choisir un fichier JSON")}</span>
+                <input className="sr-only" aria-label={t("Importer des études JSON")} type="file" accept="application/json,.json" disabled={!storageReady} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void importStudies(file); }} />
               </label>
             </div>
           </section>
@@ -456,19 +465,19 @@ export default function Home() {
           <section className={ui.panel}>
             <p className="m-0 font-bold text-ink">
               {!cameras.length
-                ? "Aucune caméra disponible."
+                ? t("Aucune caméra disponible.")
                 : !selectedCamera
-                  ? "Aucune caméra ne correspond aux filtres appliqués."
+                  ? t("Aucune caméra ne correspond aux filtres appliqués.")
                   : !lenses.length
-                    ? "Aucun objectif disponible."
-                    : "Sélection incomplète."}
+                    ? t("Aucun objectif disponible.")
+                    : t("Sélection incomplète.")}
             </p>
-            <p className="mt-1 mb-0 text-sm text-muted">{dataStatus}</p>
+            <p className="mt-1 mb-0 text-sm text-muted">{t(dataStatus)}</p>
           </section>
         )}
 
-        {activeTab === "cameras" && <CatalogPanel title="Caméras" items={cameras} />}
-        {activeTab === "lenses" && <CatalogPanel title="Objectifs" items={lenses} />}
+        {activeTab === "cameras" && <CatalogPanel title={t("Caméras")} items={cameras} />}
+        {activeTab === "lenses" && <CatalogPanel title={t("Objectifs")} items={lenses} />}
 
         {activeTab === "network" && (
           <NetworkPanel cameras={cameras} />
@@ -477,10 +486,10 @@ export default function Home() {
       </main>
       <footer className="site-footer">
         <a className="provider-link" href="https://yokainco.com/" target="_blank" rel="noopener noreferrer">
-          <Image src="/logo-yokai-robotics.png" alt="Logo Yokaï Robotics" width={64} height={64} unoptimized />
-          <span>Un outil proposé par <strong>Yokaï Robotics</strong><span className="provider-domain">yokainco.com ↗</span></span>
+          <Image src="/logo-yokai-robotics.png" alt={t("Logo Yokaï Robotics")} width={64} height={64} unoptimized />
+          <span>{t("Un outil proposé par ")}<strong>Yokaï Robotics</strong><span className="provider-domain">yokainco.com ↗</span></span>
         </a>
-        <span>Vos études restent dans votre navigateur.</span>
+        <span>{t("Vos études restent dans votre navigateur.")}</span>
       </footer>
     </div>
   );
@@ -499,6 +508,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 function NetworkPanel({ cameras }: { cameras: Camera[] }) {
+  const { t, formatNumber } = useTranslation();
   const [cameraId, setCameraId] = useState("");
   const selectedCamera = cameras.find((camera) => camera.id === cameraId) ?? cameras[0];
   const [width, setWidth] = useState<NumericValue>(0);
@@ -530,9 +540,9 @@ function NetworkPanel({ cameras }: { cameras: Camera[] }) {
       <section className={ui.panel}>
         <div className={ui.panelTitle}>
           <Network size={18} />
-          <h3>Débit réseau</h3>
+          <h3>{t("Débit réseau")}</h3>
         </div>
-        <p className="m-0 text-muted">Aucune caméra disponible pour calculer un débit GigE.</p>
+        <p className="m-0 text-muted">{t("Aucune caméra disponible pour calculer un débit GigE.")}</p>
       </section>
     );
   }
@@ -542,10 +552,10 @@ function NetworkPanel({ cameras }: { cameras: Camera[] }) {
       <section className={ui.panel}>
         <div className={ui.panelTitle}>
           <Network size={18} />
-          <h3>Paramètres flux GigE</h3>
+          <h3>{t("Paramètres flux GigE")}</h3>
         </div>
         <label className={ui.field}>
-          <span className={ui.fieldLabel}>Caméra</span>
+          <span className={ui.fieldLabel}>{t("Caméra")}</span>
           <select className={ui.control} value={cameraId || selectedCamera?.id} onChange={(event) => setCameraId(event.target.value)}>
             {cameras.map((camera) => (
               <option value={camera.id} key={camera.id}>
@@ -555,30 +565,30 @@ function NetworkPanel({ cameras }: { cameras: Camera[] }) {
           </select>
         </label>
         <div className={ui.formGrid}>
-          <NumberField label="Résolution L" unit="px" value={width} onChange={setWidthFromString(setWidth)} />
-          <NumberField label="Résolution H" unit="px" value={height} onChange={setWidthFromString(setHeight)} />
+          <NumberField label={t("Résolution L")} unit="px" value={width} onChange={setWidthFromString(setWidth)} />
+          <NumberField label={t("Résolution H")} unit="px" value={height} onChange={setWidthFromString(setHeight)} />
           <NumberField label="FPS" unit="fps" value={fps} onChange={setWidthFromString(setFps)} />
-          <NumberField label="Bits / pixel" unit="bit" value={bitDepth} onChange={setWidthFromString(setBitDepth)} />
-          <NumberField label="Caméras" unit="x" value={cameraCount} onChange={setWidthFromString(setCameraCount)} />
-          <NumberField label="Marge protocole" unit="%" value={overheadPercent} description="Marge pour entêtes Ethernet/IP/UDP/GVSP, inter-paquets et réserve réseau." onChange={setWidthFromString(setOverheadPercent)} />
+          <NumberField label={t("Bits / pixel")} unit="bit" value={bitDepth} onChange={setWidthFromString(setBitDepth)} />
+          <NumberField label={t("Caméras")} unit="x" value={cameraCount} onChange={setWidthFromString(setCameraCount)} />
+          <NumberField label={t("Marge protocole")} unit="%" value={overheadPercent} description={t("Marge pour entêtes Ethernet/IP/UDP/GVSP, inter-paquets et réserve réseau.")} onChange={setWidthFromString(setOverheadPercent)} />
         </div>
       </section>
 
       <section className={ui.panel}>
         <div className={ui.panelTitle}>
           <Gauge size={18} />
-          <h3>Débit nécessaire</h3>
+          <h3>{t("Débit nécessaire")}</h3>
         </div>
         <div className="result-highlight">
-          <span className="text-sm text-muted">Débit réseau estimé</span>
+          <span className="text-sm text-muted">{t("Débit réseau estimé")}</span>
           <strong className="mt-1 block text-3xl">{formatNumber(throughput.networkGbps, 2)} Gbit/s</strong>
-          <p className="mb-0 mt-2 text-sm text-muted">{formatNumber(throughput.networkMbps)} Mbit/s avec marge de {overheadPercent ?? 0}%</p>
+          <p className="mb-0 mt-2 text-sm text-muted">{t("{bandwidth} Mbit/s avec marge de {overhead}%", { bandwidth: formatNumber(throughput.networkMbps), overhead: overheadPercent ?? 0 })}</p>
         </div>
         <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
-          <Readout icon={<ScanLine size={17} />} label="Pixels / image" value={`${formatNumber(throughput.pixelsPerFrame)} px`} />
-          <Readout icon={<Database size={17} />} label="Débit utile" value={`${formatNumber(throughput.usefulMbps)} Mbit/s`} />
-          <Readout icon={<Activity size={17} />} label="Flux total" value={`${cameraCount} caméra(s)`} />
-          <Readout icon={<CameraIcon size={17} />} label="Format" value={`${width} x ${height} @ ${fps} fps`} />
+          <Readout icon={<ScanLine size={17} />} label={t("Pixels / image")} value={`${formatNumber(throughput.pixelsPerFrame)} px`} />
+          <Readout icon={<Database size={17} />} label={t("Débit utile")} value={`${formatNumber(throughput.usefulMbps)} Mbit/s`} />
+          <Readout icon={<Activity size={17} />} label={t("Flux total")} value={`${cameraCount} ${t("Caméras")}`} />
+          <Readout icon={<CameraIcon size={17} />} label={t("Format")} value={`${width} x ${height} @ ${fps} fps`} />
         </div>
         <div className="mt-4 grid gap-2 border-t border-line pt-4">
           {links.map((link) => {
@@ -632,6 +642,7 @@ function StudyPanel(props: {
   selectedCamera: Camera;
   selectedLens: Lens;
 }) {
+  const { t, formatNumber } = useTranslation();
   const { result } = props;
   const [isStudyModalOpen, setIsStudyModalOpen] = useState(false);
   const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
@@ -721,10 +732,10 @@ function StudyPanel(props: {
           <div>
             <div className={ui.panelTitle}>
               <Activity size={18} />
-              <h3>Étude active</h3>
+              <h3>{t("Étude active")}</h3>
             </div>
             <label className="grid gap-2">
-              <span className={ui.fieldLabel}>Sélection</span>
+              <span className={ui.fieldLabel}>{t("Sélection")}</span>
               <select className={ui.control} value={props.activeStudyId} onChange={(event) => props.selectStudy(event.target.value)}>
                 {props.studies.map((study) => (
                   <option value={study.id} key={study.id}>
@@ -735,10 +746,10 @@ function StudyPanel(props: {
             </label>
           </div>
           <div className="grid grid-cols-[42px_42px] gap-2">
-            <button className={ui.iconButton} onClick={props.createStudy} disabled={!props.storageReady} title="Créer une étude">
+            <button className={ui.iconButton} onClick={props.createStudy} disabled={!props.storageReady} title={t("Créer une étude")}>
               <Plus size={16} />
             </button>
-            <button className={ui.iconButton} onClick={() => setIsStudyModalOpen(true)} title="Gérer l’étude">
+            <button className={ui.iconButton} onClick={() => setIsStudyModalOpen(true)} title={t("Gérer l’étude")}>
               <Pencil size={16} />
             </button>
           </div>
@@ -748,44 +759,42 @@ function StudyPanel(props: {
       <section className={ui.panel}>
         <div className={ui.panelTitle}>
           <Settings2 size={18} />
-          <h3>Paramètres application</h3>
+          <h3>{t("Paramètres application")}</h3>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <NumberField label="Champ largeur" unit="mm" description="Largeur réelle de la zone à voir dans l’image." value={props.study.detectionWidthMm} onChange={(value) => props.updateStudy("detectionWidthMm", value)} />
-          <NumberField label="Champ hauteur" unit="mm" description="Hauteur réelle de la zone à couvrir." value={props.study.detectionHeightMm} onChange={(value) => props.updateStudy("detectionHeightMm", value)} />
-          <NumberField label="Distance travail" unit="mm" description="Distance entre l’objectif et la pièce inspectée." value={props.study.workingDistanceMm} onChange={(value) => props.updateStudy("workingDistanceMm", value)} />
-          <NumberField label="Vitesse objet" unit="m/s" description="Vitesse de déplacement de la pièce pendant l’acquisition." value={props.study.objectSpeedMmS} onChange={(value) => props.updateStudy("objectSpeedMmS", value)} />
-          <NumberField label="Détail minimal" unit="mm" description="Plus petit défaut ou élément que tu veux détecter." value={props.study.minDetailMm} onChange={(value) => props.updateStudy("minDetailMm", value)} />
-          <NumberField label="Pixels par détail" unit="px" description="Nombre de pixels souhaité sur ce détail minimal." value={props.study.pixelsPerDetailTarget} onChange={(value) => props.updateStudy("pixelsPerDetailTarget", value)} />
-          <NumberField label="Cadence requise" unit="fps" description="Nombre minimal d’images par seconde nécessaire." value={props.study.requiredFps} onChange={(value) => props.updateStudy("requiredFps", value)} />
-          <NumberField label="Exposition" unit="us" description="Temps d’exposition utilisé pour estimer le flou de mouvement." value={props.study.exposureUs} onChange={(value) => props.updateStudy("exposureUs", value)} />
-          <NumberField label="Flou max" unit="px" description="Flou de mouvement maximal acceptable en pixels." value={props.study.maxMotionBlurPx} onChange={(value) => props.updateStudy("maxMotionBlurPx", value)} />
-          <NumberField label="Largeur objet" unit="cm" description="Largeur réelle de l’objet à projeter sur le capteur." value={props.study.objectWidthCm} onChange={(value) => props.updateStudy("objectWidthCm", value)} />
-          <NumberField label="Hauteur objet" unit="cm" description="Hauteur réelle de l’objet à projeter sur le capteur." value={props.study.objectHeightCm} onChange={(value) => props.updateStudy("objectHeightCm", value)} />
-          <NumberField label="Longueur objet" unit="cm" description="Longueur réelle de l’objet à projeter sur le capteur." value={props.study.objectLengthCm} onChange={(value) => props.updateStudy("objectLengthCm", value)} />
+          <NumberField label={t("Champ largeur")} unit="mm" description={t("Largeur réelle de la zone à voir dans l’image.")} value={props.study.detectionWidthMm} onChange={(value) => props.updateStudy("detectionWidthMm", value)} />
+          <NumberField label={t("Champ hauteur")} unit="mm" description={t("Hauteur réelle de la zone à couvrir.")} value={props.study.detectionHeightMm} onChange={(value) => props.updateStudy("detectionHeightMm", value)} />
+          <NumberField label={t("Distance travail")} unit="mm" description={t("Distance entre l’objectif et la pièce inspectée.")} value={props.study.workingDistanceMm} onChange={(value) => props.updateStudy("workingDistanceMm", value)} />
+          <NumberField label={t("Vitesse objet")} unit="m/s" description={t("Vitesse de déplacement de la pièce pendant l’acquisition.")} value={props.study.objectSpeedMmS} onChange={(value) => props.updateStudy("objectSpeedMmS", value)} />
+          <NumberField label={t("Détail minimal")} unit="mm" description={t("Plus petit défaut ou élément que tu veux détecter.")} value={props.study.minDetailMm} onChange={(value) => props.updateStudy("minDetailMm", value)} />
+          <NumberField label={t("Pixels par détail")} unit="px" description={t("Nombre de pixels souhaité sur ce détail minimal.")} value={props.study.pixelsPerDetailTarget} onChange={(value) => props.updateStudy("pixelsPerDetailTarget", value)} />
+          <NumberField label={t("Cadence requise")} unit="fps" description={t("Nombre minimal d’images par seconde nécessaire.")} value={props.study.requiredFps} onChange={(value) => props.updateStudy("requiredFps", value)} />
+          <NumberField label={t("Exposition")} unit="us" description={t("Temps d’exposition utilisé pour estimer le flou de mouvement.")} value={props.study.exposureUs} onChange={(value) => props.updateStudy("exposureUs", value)} />
+          <NumberField label={t("Flou max")} unit="px" description={t("Flou de mouvement maximal acceptable en pixels.")} value={props.study.maxMotionBlurPx} onChange={(value) => props.updateStudy("maxMotionBlurPx", value)} />
+          <NumberField label={t("Largeur objet")} unit="cm" description={t("Largeur réelle de l’objet à projeter sur le capteur.")} value={props.study.objectWidthCm} onChange={(value) => props.updateStudy("objectWidthCm", value)} />
+          <NumberField label={t("Hauteur objet")} unit="cm" description={t("Hauteur réelle de l’objet à projeter sur le capteur.")} value={props.study.objectHeightCm} onChange={(value) => props.updateStudy("objectHeightCm", value)} />
+          <NumberField label={t("Longueur objet")} unit="cm" description={t("Longueur réelle de l’objet à projeter sur le capteur.")} value={props.study.objectLengthCm} onChange={(value) => props.updateStudy("objectLengthCm", value)} />
           <label className="grid gap-2">
-            <span className={ui.fieldLabel}>Axe déplacement</span>
+            <span className={ui.fieldLabel}>{t("Axe déplacement")}</span>
             <select
               className={ui.control}
               value={props.study.objectTravelAxis}
               onChange={(event) => props.updateStudy("objectTravelAxis", event.target.value as Study["objectTravelAxis"])}
             >
-              <option value="horizontal">Horizontal</option>
-              <option value="vertical">Vertical</option>
+              <option value="horizontal">{t("Horizontal")}</option>
+              <option value="vertical">{t("Vertical")}</option>
             </select>
-            <span className="text-xs text-muted">
-              Sélectionne l’axe réel du convoyeur pour utiliser la bonne dimension du champ couvert dans le calcul.
-            </span>
+            <span className="text-xs text-muted">{t("Sélectionne l’axe réel du convoyeur pour utiliser la bonne dimension du champ couvert dans le calcul.")}</span>
           </label>
         </div>
         <div className="mt-5 border-t border-line pt-4">
           <div className="mb-3 flex items-center gap-2 text-cyan">
             <SlidersHorizontal size={18} />
-            <h4 className="m-0 text-base font-bold text-ink">Filtres caméra</h4>
+            <h4 className="m-0 text-base font-bold text-ink">{t("Filtres caméra")}</h4>
           </div>
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_repeat(4,minmax(0,1fr))]">
             <label className="grid gap-2 text-xs font-bold uppercase tracking-normal text-muted">
-              <span>Format capteur</span>
+              <span>{t("Format capteur")}</span>
               <select
                 className={cx(ui.control, "min-h-[148px] py-2")}
                 multiple
@@ -804,21 +813,21 @@ function StudyPanel(props: {
               </select>
             </label>
             <SelectFilter
-              label="FPS min"
+              label={t("FPS min")}
               value={props.study.fpsMin ?? null}
               options={fpsOptions}
               digits={0}
               onChange={(value) => props.updateStudy("fpsMin", value)}
             />
             <SelectFilter
-              label="FPS max"
+              label={t("FPS max")}
               value={props.study.fpsMax ?? null}
               options={fpsOptions}
               digits={0}
               onChange={(value) => props.updateStudy("fpsMax", value)}
             />
             <SelectFilter
-              label="Résolution min"
+              label={t("Résolution min")}
               suffix="MP"
               value={props.study.resolutionMpMin ?? null}
               options={resolutionOptions}
@@ -826,7 +835,7 @@ function StudyPanel(props: {
               onChange={(value) => props.updateStudy("resolutionMpMin", value)}
             />
             <SelectFilter
-              label="Résolution max"
+              label={t("Résolution max")}
               suffix="MP"
               value={props.study.resolutionMpMax ?? null}
               options={resolutionOptions}
@@ -834,16 +843,14 @@ function StudyPanel(props: {
               onChange={(value) => props.updateStudy("resolutionMpMax", value)}
             />
           </div>
-          <p className="m-0 mt-3 text-xs leading-5 text-muted">
-            La résolution est calculée à partir de `largeur x hauteur` du capteur.
-          </p>
+          <p className="m-0 mt-3 text-xs leading-5 text-muted">{t("La résolution est calculée à partir de `largeur x hauteur` du capteur.")}</p>
         </div>
       </section>
 
       <section className={ui.panel}>
         <div className={ui.panelTitle}>
           <CheckCircle2 size={18} />
-          <h3>Meilleurs matchs caméra + objectif</h3>
+          <h3>{t("Meilleurs matchs caméra + objectif")}</h3>
         </div>
         <div className="grid gap-2.5 xl:grid-cols-4">
           {props.recommendations.slice(0, 4).map((match, index) => (
@@ -859,14 +866,14 @@ function StudyPanel(props: {
               onClick={() => props.applyRecommendation(match.camera.id, match.lens.id)}
             >
               <div>
-                <p className="m-0 text-xs font-semibold uppercase tracking-wide text-muted">#{index + 1} · Score {match.result.score}%</p>
+                <p className="m-0 text-xs font-semibold uppercase tracking-wide text-muted">#{index + 1}{t(" · Score ")}{match.result.score}%</p>
                 <strong className="block break-words text-ink">{match.camera.brand} {match.camera.model}</strong>
                 <span className="text-sm text-muted">{match.lens.brand} {match.lens.model} · {match.lens.focalLengthMm} mm</span>
               </div>
               <div className="grid gap-1 text-xs text-ink">
                 <span>{formatNumber(match.result.coveredWidthMm)} x {formatNumber(match.result.coveredHeightMm)} mm</span>
                 <span>{formatNumber(match.result.mmPerPixel, 4)} mm/px</span>
-                <span>Flou {formatNumber(match.result.motionBlurPixels)} px</span>
+                <span>{t("Flou ")}{formatNumber(match.result.motionBlurPixels)} px</span>
               </div>
             </button>
           ))}
@@ -876,11 +883,11 @@ function StudyPanel(props: {
       <section className={ui.panel}>
         <div className={ui.panelTitle}>
           <Gauge size={18} />
-          <h3>Sélection</h3>
+          <h3>{t("Sélection")}</h3>
         </div>
         <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
           <label className="grid gap-2 text-xs font-bold uppercase tracking-normal text-muted">
-            <span>Caméra sélectionnée</span>
+            <span>{t("Caméra sélectionnée")}</span>
             <select className={ui.control} value={props.selectedCameraId} onChange={(event) => props.setSelectedCameraId(event.target.value)}>
               {props.cameras.map((camera) => (
                 <option value={camera.id} key={camera.id}>
@@ -890,7 +897,7 @@ function StudyPanel(props: {
             </select>
           </label>
           <label className="grid gap-2 text-xs font-bold uppercase tracking-normal text-muted">
-            <span>Objectif sélectionné</span>
+            <span>{t("Objectif sélectionné")}</span>
             <select className={ui.control} value={props.selectedLensId} onChange={(event) => props.setSelectedLensId(event.target.value)}>
               {props.lenses.map((lens) => (
                 <option value={lens.id} key={lens.id}>
@@ -904,14 +911,12 @@ function StudyPanel(props: {
               type="button"
               className="min-h-10 rounded-md border border-line bg-white px-4 text-sm font-bold text-cyan hover:border-cyan"
               onClick={() => setIsSpecsModalOpen(true)}
-            >
-              Voir caractéristiques caméra + objectif
-            </button>
+            >{t("Voir caractéristiques caméra + objectif")}</button>
           </div>
         </div>
         <div className="result-highlight">
           <div className="flex items-baseline justify-between">
-            <span className="text-sm text-muted">Compatibilité</span>
+            <span className="text-sm text-muted">{t("Compatibilité")}</span>
             <strong className="text-3xl">{result.score}%</strong>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-cyan/10">
@@ -919,24 +924,24 @@ function StudyPanel(props: {
           </div>
         </div>
         <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-4">
-          <Readout icon={<Ruler size={17} />} label="Focale théorique" value={`${formatNumber(result.requiredFocalLengthMm)} mm`} />
-          <Readout icon={<ScanLine size={17} />} label="Champ couvert" value={`${formatNumber(result.coveredWidthMm)} x ${formatNumber(result.coveredHeightMm)} mm`} />
-          <Readout icon={<Database size={17} />} label="Taille réelle d'un pixel" value={`${formatNumber(result.mmPerPixel, 4)} mm/px`} />
-          <Readout icon={<Activity size={17} />} label="Détail" value={`${formatNumber(result.pixelsOnDetail)} px`} />
-          <Readout icon={<Gauge size={17} />} label="Flou mouvement" value={`${formatNumber(result.motionBlurPixels)} px`} />
-          <Readout icon={<Aperture size={17} />} label="Diagonale capteur" value={`${formatNumber(result.sensorDiagonalMm)} mm`} />
-          <Readout icon={<ScanLine size={17} />} label="Angle horizontal" value={`${formatNumber(result.horizontalFovDeg)} °`} />
-          <Readout icon={<Ruler size={17} />} label="Angle vertical" value={`${formatNumber(result.verticalFovDeg)} °`} />
+          <Readout icon={<Ruler size={17} />} label={t("Focale théorique")} value={`${formatNumber(result.requiredFocalLengthMm)} mm`} />
+          <Readout icon={<ScanLine size={17} />} label={t("Champ couvert")} value={`${formatNumber(result.coveredWidthMm)} x ${formatNumber(result.coveredHeightMm)} mm`} />
+          <Readout icon={<Database size={17} />} label={t("Taille réelle d'un pixel")} value={`${formatNumber(result.mmPerPixel, 4)} mm/px`} />
+          <Readout icon={<Activity size={17} />} label={t("Détail")} value={`${formatNumber(result.pixelsOnDetail)} px`} />
+          <Readout icon={<Gauge size={17} />} label={t("Flou mouvement")} value={`${formatNumber(result.motionBlurPixels)} px`} />
+          <Readout icon={<Aperture size={17} />} label={t("Diagonale capteur")} value={`${formatNumber(result.sensorDiagonalMm)} mm`} />
+          <Readout icon={<ScanLine size={17} />} label={t("Angle horizontal")} value={`${formatNumber(result.horizontalFovDeg)} °`} />
+          <Readout icon={<Ruler size={17} />} label={t("Angle vertical")} value={`${formatNumber(result.verticalFovDeg)} °`} />
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {[
-            ["Champ", result.fieldCompatible],
-            ["Détail", result.detailCompatible],
-            ["Cadence", result.fpsCompatible],
-            ["Flou", result.blurCompatible],
-            ["Monture", result.mountCompatible],
-            ["Capteur", result.sensorCompatible],
-            ["Focus", result.focusCompatible]
+            [t("Champ"), result.fieldCompatible],
+            [t("Détail"), result.detailCompatible],
+            [t("Cadence"), result.fpsCompatible],
+            [t("Flou"), result.blurCompatible],
+            [t("Monture"), result.mountCompatible],
+            [t("Capteur"), result.sensorCompatible],
+            [t("Focus"), result.focusCompatible]
           ].map(([label, ok]) => (
             <span
               className={cx(
@@ -962,13 +967,13 @@ function StudyPanel(props: {
             onClick={() => addComparisonMatch(selectedMatch)}
           >
             {isSelectedMatchCompared ? <CheckCircle2 size={16} /> : <Plus size={16} />}
-            {isSelectedMatchCompared ? "Couple déjà dans la comparaison" : "Ajouter ce couple à la comparaison"}
+            {isSelectedMatchCompared ? t("Couple déjà dans la comparaison") : t("Ajouter ce couple à la comparaison")}
           </button>
         </div>
         {result.issues.length > 0 && (
           <div className="mt-3 rounded-md border border-accent/25 bg-accent/10 p-3 text-accent-hover">
             {result.issues.map((issue) => (
-              <p className="mb-1 last:mb-0" key={issue}>{issue}</p>
+              <p className="mb-1 last:mb-0" key={issue}>{t(issue)}</p>
             ))}
           </div>
         )}
@@ -988,15 +993,15 @@ function StudyPanel(props: {
           <section className="w-full max-w-lg rounded-panel border border-line bg-white p-5 shadow-panel">
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
-                <p className="mb-1 text-xs font-bold uppercase text-muted">Gestion étude</p>
+                <p className="mb-1 text-xs font-bold uppercase text-muted">{t("Gestion étude")}</p>
                 <h3 className="m-0 text-lg font-bold text-ink">{props.study.name}</h3>
               </div>
-              <button className={ui.iconButton} onClick={() => setIsStudyModalOpen(false)} title="Fermer">
+              <button className={ui.iconButton} onClick={() => setIsStudyModalOpen(false)} title={t("Fermer")} aria-label={t("Fermer")}>
                 ×
               </button>
             </div>
 
-            <TextField label="Nom de l’étude" value={props.study.name} onChange={props.updateStudyName} />
+            <TextField label={t("Nom de l’étude")} value={props.study.name} onChange={props.updateStudyName} />
 
             <div className="mt-5 grid gap-2 border-t border-line pt-4 sm:grid-cols-[minmax(0,1fr)_auto]">
               <button
@@ -1005,9 +1010,7 @@ function StudyPanel(props: {
                   const saved = await handleSave();
                   if (saved) setIsStudyModalOpen(false);
                 }}
-              >
-                Enregistrer les modifications
-              </button>
+              >{t("Enregistrer les modifications")}</button>
               <button
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-red-300 bg-white px-4 font-bold text-red-600 hover:border-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={!props.study.id || !props.storageReady}
@@ -1016,9 +1019,7 @@ function StudyPanel(props: {
                   setIsStudyModalOpen(false);
                 }}
               >
-                <Trash2 size={16} />
-                Supprimer
-              </button>
+                <Trash2 size={16} />{t("Supprimer")}</button>
             </div>
           </section>
         </div>
@@ -1034,8 +1035,8 @@ function StudyPanel(props: {
 
       <div className="study-actions">
         <div className="study-actions-inner">
-          <button type="button" className="cta cta-secondary" onClick={() => props.exportAllStudies(serializeComparisonKeys(comparisonKeys))}>Exporter toutes les études</button>
-          <button type="button" className="cta cta-secondary" onClick={() => props.exportStudy(serializeComparisonKeys(comparisonKeys))}>Exporter cette étude</button>
+          <button type="button" className="cta cta-secondary" onClick={() => props.exportAllStudies(serializeComparisonKeys(comparisonKeys))}>{t("Exporter toutes les études")}</button>
+          <button type="button" className="cta cta-secondary" onClick={() => props.exportStudy(serializeComparisonKeys(comparisonKeys))}>{t("Exporter cette étude")}</button>
           <div className="save-action">
             <button
               type="button"
@@ -1056,7 +1057,7 @@ function StudyPanel(props: {
                 )}
               >
                 {saveStatus === "saving" ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <CheckCircle2 size={17} />}
-                {saveStatus === "saving" ? "Enregistrement..." : "Enregistrer sur ce navigateur"}
+                {saveStatus === "saving" ? t("Enregistrement...") : t("Enregistrer sur ce navigateur")}
               </span>
               <span
                 className={cx(
@@ -1064,9 +1065,7 @@ function StudyPanel(props: {
                   saveStatus === "saved" ? "opacity-100" : "opacity-0"
                 )}
               >
-                <CheckCircle2 size={17} />
-                Étude enregistrée
-              </span>
+                <CheckCircle2 size={17} />{t("Étude enregistrée")}</span>
             </button>
           </div>
         </div>
@@ -1083,17 +1082,18 @@ function MatchComparisonCard(props: {
   study: Study;
   onRemove: (key: string) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <section className={ui.panel}>
       <div className={ui.panelTitle}>
         <Gauge size={18} />
-        <h3>Comparaison technique</h3>
+        <h3>{t("Comparaison technique")}</h3>
       </div>
 
       {props.comparisonMatches.length > 0 && (
         <div className="mb-4 grid grid-cols-1 gap-3">
           <label className="grid gap-2 text-xs font-bold uppercase tracking-normal text-muted">
-            <span>Couple affiché</span>
+            <span>{t("Couple affiché")}</span>
             <select
               className={ui.control}
               value={props.activeComparisonKey || (props.comparisonMatches[0] ? matchKey(props.comparisonMatches[0]) : "")}
@@ -1114,8 +1114,8 @@ function MatchComparisonCard(props: {
         <ComparisonTable matches={props.comparisonMatches} study={props.study} onRemove={props.onRemove} />
       ) : (
         <div className="rounded-panel border border-line bg-paper p-4">
-          <p className="m-0 font-bold text-ink">Aucun couple sélectionné</p>
-          <p className="mt-1 mb-0 text-sm text-muted">Ajoute le couple sélectionné depuis la card de résultat technique.</p>
+          <p className="m-0 font-bold text-ink">{t("Aucun couple sélectionné")}</p>
+          <p className="mt-1 mb-0 text-sm text-muted">{t("Ajoute le couple sélectionné depuis la card de résultat technique.")}</p>
         </div>
       )}
     </section>
@@ -1123,6 +1123,7 @@ function MatchComparisonCard(props: {
 }
 
 function ObjectSizeChart({ match, study }: { match: RankedMatch | null; study: Study }) {
+  const { t, formatNumber } = useTranslation();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [chartMaxDistanceM, setChartMaxDistanceM] = useState(20);
   const widthCm = positiveNumber(study.objectWidthCm);
@@ -1132,27 +1133,25 @@ function ObjectSizeChart({ match, study }: { match: RankedMatch | null; study: S
   if (!match || (widthCm <= 0 && heightCm <= 0 && lengthCm <= 0)) {
     return (
       <div className="rounded-panel border border-line bg-paper p-4">
-        <p className="m-0 font-bold text-ink">Graphique taille pixel</p>
-        <p className="mt-1 mb-0 text-sm text-muted">
-          Renseigne les dimensions de l’objet pour afficher les 3 courbes.
-        </p>
+        <p className="m-0 font-bold text-ink">{t("Graphique taille pixel")}</p>
+        <p className="mt-1 mb-0 text-sm text-muted">{t("Renseigne les dimensions de l’objet pour afficher les 3 courbes.")}</p>
       </div>
     );
   }
 
   const series = [
     {
-      label: "Largeur",
+      label: t("Largeur"),
       color: "#168ba0",
       dimensionMm: widthCm * 10
     },
     {
-      label: "Hauteur",
+      label: t("Hauteur"),
       color: "#e95420",
       dimensionMm: heightCm * 10
     },
     {
-      label: "Longueur",
+      label: t("Longueur"),
       color: "#43565c",
       dimensionMm: lengthCm * 10
     }
@@ -1236,14 +1235,12 @@ function ObjectSizeChart({ match, study }: { match: RankedMatch | null; study: S
     <div className="rounded-panel border border-line bg-paper p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="m-0 text-xs font-bold uppercase text-muted">Taille en pixels selon la distance</p>
-          <p className="m-0 text-sm text-muted">
-            Courbes de {formatNumber(chartMinDistanceMm / 1000, 1)} à {formatNumber(chartMaxDistanceM, 0)} m pour le couple sélectionné.
-          </p>
+          <p className="m-0 text-xs font-bold uppercase text-muted">{t("Taille en pixels selon la distance")}</p>
+          <p className="m-0 text-sm text-muted">{t("Courbes de {min} à {max} m pour le couple sélectionné.", { min: formatNumber(chartMinDistanceMm / 1000, 1), max: formatNumber(chartMaxDistanceM, 0) })}</p>
         </div>
         <div className="grid min-w-[260px] gap-2">
           <label className="grid gap-1.5 text-xs font-bold uppercase tracking-normal text-muted">
-            <span>Distance max visualisée: {formatNumber(chartMaxDistanceM, 0)} m</span>
+            <span>{t("Distance max visualisée: ")}{formatNumber(chartMaxDistanceM, 0)} m</span>
             <input
               className="w-full accent-cyan"
               max={20}
@@ -1270,7 +1267,7 @@ function ObjectSizeChart({ match, study }: { match: RankedMatch | null; study: S
           className="block h-auto w-full"
           viewBox={`0 0 ${viewWidth} ${viewHeight}`}
           role="img"
-          aria-label="Graphique taille pixel selon la distance"
+          aria-label={t("Graphique taille pixel selon la distance")}
           onPointerLeave={() => setHoveredIndex(null)}
           onPointerMove={handlePointerMove}
         >
@@ -1391,18 +1388,19 @@ function ComparisonTable({
   study: Study;
   onRemove: (key: string) => void;
 }) {
-  const rows = comparisonRows(matches, study);
+  const { t, formatNumber } = useTranslation();
+  const rows = comparisonRows(matches, study, t, formatNumber);
 
   return (
     <div className="overflow-x-auto rounded-panel border border-line">
       <table className="min-w-full border-collapse bg-white text-sm">
         <thead>
           <tr className="bg-soft text-left text-ink">
-            <th className="sticky left-0 z-10 min-w-[190px] bg-soft px-3 py-3 font-bold">Caractéristique</th>
+            <th className="sticky left-0 z-10 min-w-[190px] bg-soft px-3 py-3 font-bold">{t("Caractéristique")}</th>
             {matches.map((match, index) => (
               <th className="min-w-[220px] px-3 py-3 align-top font-bold" key={matchKey(match)}>
                 <div className="grid gap-2">
-                  <span>Couple {index + 1}</span>
+                  <span>{t("Couple ")}{index + 1}</span>
                   <span className="text-xs font-normal text-muted">
                     {match.camera.brand} {match.camera.model}
                     <br />
@@ -1413,9 +1411,7 @@ function ComparisonTable({
                     className="inline-flex min-h-8 w-fit items-center gap-1.5 rounded-md border border-line bg-white px-3 text-xs font-semibold text-cyan hover:bg-cyan/10"
                     onClick={() => onRemove(matchKey(match))}
                   >
-                    <X size={13} />
-                    Retirer
-                  </button>
+                    <X size={13} />{t("Retirer")}</button>
                 </div>
               </th>
             ))}
@@ -1444,17 +1440,17 @@ function matchKey(match: RankedMatch) {
   return `${match.camera.id}::${match.lens.id}`;
 }
 
-function comparisonRows(matches: RankedMatch[], study: Study) {
+function comparisonRows(matches: RankedMatch[], study: Study, t: Translator, formatNumber: ReturnType<typeof useTranslation>["formatNumber"]) {
   const workingDistanceMm = positiveNumber(study.workingDistanceMm);
   const objectDimensions = [
-    { label: "Largeur", value: positiveNumber(study.objectWidthCm) * 10 },
-    { label: "Hauteur", value: positiveNumber(study.objectHeightCm) * 10 },
-    { label: "Longueur", value: positiveNumber(study.objectLengthCm) * 10 }
+    { label: t("Largeur"), value: positiveNumber(study.objectWidthCm) * 10 },
+    { label: t("Hauteur"), value: positiveNumber(study.objectHeightCm) * 10 },
+    { label: t("Longueur"), value: positiveNumber(study.objectLengthCm) * 10 }
   ].filter((item) => item.value > 0);
-  const travelAxisLabel = study.objectTravelAxis === "vertical" ? "Vertical" : "Horizontal";
+  const travelAxisLabel = study.objectTravelAxis === "vertical" ? t("Vertical") : t("Horizontal");
 
   function objectPixelsLabel(match: RankedMatch) {
-    if (workingDistanceMm <= 0 || objectDimensions.length === 0) return "Non renseigné";
+    if (workingDistanceMm <= 0 || objectDimensions.length === 0) return t("Non renseigné");
     return objectDimensions
       .map((item) => `${item.label} ${formatNumber(objectPixelsAtDistance(match.camera, match.lens, item.value, workingDistanceMm), 0)} px`)
       .join(" · ");
@@ -1470,140 +1466,141 @@ function comparisonRows(matches: RankedMatch[], study: Study) {
 
     return (
       <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-bold ${className}`}>
-        {status}
+        {t(status)}
       </span>
     );
   }
 
   return [
     {
-      label: "Score",
+      label: t("Score"),
       values: matches.map((match) => `${match.result.score}%`)
     },
     {
-      label: "Caméra",
+      label: t("Caméra"),
       values: matches.map((match) => `${match.camera.brand} ${match.camera.model}`)
     },
     {
-      label: "Objectif",
+      label: t("Objectif"),
       values: matches.map((match) => `${match.lens.brand} ${match.lens.model}`)
     },
     {
-      label: "Focale objectif",
+      label: t("Focale objectif"),
       values: matches.map((match) => `${formatNumber(match.lens.focalLengthMm)} mm`)
     },
     {
-      label: "Focale théorique",
+      label: t("Focale théorique"),
       values: matches.map((match) => `${formatNumber(match.result.requiredFocalLengthMm)} mm`)
     },
     {
-      label: "Champ couvert",
+      label: t("Champ couvert"),
       values: matches.map((match) => `${formatNumber(match.result.coveredWidthMm)} x ${formatNumber(match.result.coveredHeightMm)} mm`)
     },
     {
-      label: "Résolution caméra",
+      label: t("Résolution caméra"),
       values: matches.map((match) => `${match.camera.resolutionWidth} x ${match.camera.resolutionHeight} px`)
     },
     {
-      label: "Taille pixel réelle",
+      label: t("Taille pixel réelle"),
       values: matches.map((match) => `${formatNumber(match.result.mmPerPixel, 4)} mm/px`)
     },
     {
-      label: "Taille max objet",
+      label: t("Taille max objet"),
       values: matches.map((match) =>
-        match.result.objectMaxDimensionMm > 0 ? `${formatNumber(match.result.objectMaxDimensionMm)} mm` : "Non renseigné"
+        match.result.objectMaxDimensionMm > 0 ? `${formatNumber(match.result.objectMaxDimensionMm)} mm` : t("Non renseigné")
       )
     },
     {
-      label: "Axe déplacement",
+      label: t("Axe déplacement"),
       values: matches.map(() => travelAxisLabel)
     },
     {
-      label: "Champ de vision utilisé",
+      label: t("Champ de vision utilisé"),
       values: matches.map((match) =>
-        match.result.objectFieldOfViewMm > 0 ? `${formatNumber(match.result.objectFieldOfViewMm)} mm` : "Non renseigné"
+        match.result.objectFieldOfViewMm > 0 ? `${formatNumber(match.result.objectFieldOfViewMm)} mm` : t("Non renseigné")
       )
     },
     {
-      label: "Temps visibilité objet",
+      label: t("Temps visibilité objet"),
       values: matches.map((match) =>
-        match.result.objectVisibilityTimeS > 0 ? `${formatNumber(match.result.objectVisibilityTimeS, 2)} s` : "0,00 s"
+        `${formatNumber(Math.max(0, match.result.objectVisibilityTimeS), 2)} s`
       )
     },
     {
-      label: "Images théoriques",
+      label: t("Images théoriques"),
       values: matches.map((match) =>
-        match.result.objectFrameCount > 0 ? `${formatNumber(match.result.objectFrameCount, 2)}` : "0,00"
+        formatNumber(Math.max(0, match.result.objectFrameCount), 2)
       )
     },
     {
-      label: "Images arrondies",
+      label: t("Images arrondies"),
       values: matches.map((match) => `${match.result.objectRoundedFrameCount}`)
     },
     {
-      label: "Couverture",
+      label: t("Couverture"),
       values: matches.map((match) => coverageBadge(match.result.objectCoverageStatus))
     },
     {
-      label: "Taille objet à la distance de travail",
+      label: t("Taille objet à la distance de travail"),
       values: matches.map((match) => objectPixelsLabel(match))
     },
     {
-      label: "Pixels sur détail",
+      label: t("Pixels sur détail"),
       values: matches.map((match) => `${formatNumber(match.result.pixelsOnDetail)} px`)
     },
     {
-      label: "Cadence max",
+      label: t("Cadence max"),
       values: matches.map((match) => `${formatNumber(match.camera.maxFps)} fps`)
     },
     {
-      label: "Flou mouvement",
+      label: t("Flou mouvement"),
       values: matches.map((match) => `${formatNumber(match.result.motionBlurPixels)} px`)
     },
     {
-      label: "Diagonale capteur",
+      label: t("Diagonale capteur"),
       values: matches.map((match) => `${formatNumber(match.result.sensorDiagonalMm)} mm`)
     },
     {
-      label: "Format capteur",
-      values: matches.map((match) => `${match.camera.sensorFormat || "Non renseigné"} / ${match.lens.sensorFormat || "Non renseigné"}`)
+      label: t("Format capteur"),
+      values: matches.map((match) => `${match.camera.sensorFormat || t("Non renseigné")} / ${match.lens.sensorFormat || t("Non renseigné")}`)
     },
     {
-      label: "Monture",
-      values: matches.map((match) => `${match.camera.lensMount || "Non renseigné"} / ${match.lens.mount || "Non renseigné"}`)
+      label: t("Monture"),
+      values: matches.map((match) => `${match.camera.lensMount || t("Non renseigné")} / ${match.lens.mount || t("Non renseigné")}`)
     },
     {
-      label: "Distance focus min",
+      label: t("Distance focus min"),
       values: matches.map((match) => `${formatNumber(match.lens.minWorkingDistanceMm || match.lens.minFocusDistanceMm)} mm`)
     },
     {
-      label: "Angle horizontal",
+      label: t("Angle horizontal"),
       values: matches.map((match) => `${formatNumber(match.result.horizontalFovDeg)} deg`)
     },
     {
-      label: "Angle vertical",
+      label: t("Angle vertical"),
       values: matches.map((match) => `${formatNumber(match.result.verticalFovDeg)} deg`)
     },
     {
-      label: "Compatibilités",
+      label: t("Compatibilités"),
       values: matches.map((match) => <CompatibilityBadges match={match} key={matchKey(match)} />)
     },
     {
-      label: "Points d'attention",
-      values: matches.map((match) => match.result.issues.length > 0 ? match.result.issues.join(" ") : "Aucun")
+      label: t("Points d'attention"),
+      values: matches.map((match) => match.result.issues.length > 0 ? match.result.issues.map((issue) => t(issue)).join(" ") : t("Aucun"))
     }
   ];
 }
 
 function CompatibilityBadges({ match }: { match: RankedMatch }) {
+  const { t } = useTranslation();
   const checks = [
-    ["Champ", match.result.fieldCompatible],
-    ["Détail", match.result.detailCompatible],
-    ["Cadence", match.result.fpsCompatible],
-    ["Flou", match.result.blurCompatible],
-    ["Monture", match.result.mountCompatible],
-    ["Capteur", match.result.sensorCompatible],
-    ["Focus", match.result.focusCompatible]
+    [t("Champ"), match.result.fieldCompatible],
+    [t("Détail"), match.result.detailCompatible],
+    [t("Cadence"), match.result.fpsCompatible],
+    [t("Flou"), match.result.blurCompatible],
+    [t("Monture"), match.result.mountCompatible],
+    [t("Capteur"), match.result.sensorCompatible],
+    [t("Focus"), match.result.focusCompatible]
   ];
 
   return (
@@ -1625,6 +1622,7 @@ function CompatibilityBadges({ match }: { match: RankedMatch }) {
 }
 
 function SelectedCameraCard({ camera }: { camera: Camera }) {
+  const { t, formatNumber } = useTranslation();
   return (
     <article className="rounded-panel border border-line bg-paper p-4">
       <div className="mb-3 flex items-start gap-3">
@@ -1632,25 +1630,26 @@ function SelectedCameraCard({ camera }: { camera: Camera }) {
           <CameraIcon size={18} />
         </span>
         <div className="min-w-0">
-          <p className="m-0 text-xs font-bold uppercase text-muted">Caméra sélectionnée</p>
+          <p className="m-0 text-xs font-bold uppercase text-muted">{t("Caméra sélectionnée")}</p>
           <h4 className="m-0 break-words text-base font-bold text-ink">
             {camera.brand} {camera.model}
           </h4>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <SelectedSpec label="Résolution" value={`${camera.resolutionWidth} x ${camera.resolutionHeight} px`} />
-        <SelectedSpec label="Cadence" value={`${formatNumber(camera.maxFps)} fps`} />
-        <SelectedSpec label="Capteur" value={`${formatNumber(camera.sensorWidthMm)} x ${formatNumber(camera.sensorHeightMm)} mm`} />
-        <SelectedSpec label="Pixel" value={`${formatNumber(camera.pixelSizeUm)} um`} />
-        <SelectedSpec label="Format" value={camera.sensorFormat} />
-        <SelectedSpec label="Monture" value={camera.lensMount} />
+        <SelectedSpec label={t("Résolution")} value={`${camera.resolutionWidth} x ${camera.resolutionHeight} px`} />
+        <SelectedSpec label={t("Cadence")} value={`${formatNumber(camera.maxFps)} fps`} />
+        <SelectedSpec label={t("Capteur")} value={`${formatNumber(camera.sensorWidthMm)} x ${formatNumber(camera.sensorHeightMm)} mm`} />
+        <SelectedSpec label={t("Pixel")} value={`${formatNumber(camera.pixelSizeUm)} um`} />
+        <SelectedSpec label={t("Format")} value={camera.sensorFormat} />
+        <SelectedSpec label={t("Monture")} value={camera.lensMount} />
       </div>
     </article>
   );
 }
 
 function SelectedLensCard({ lens }: { lens: Lens }) {
+  const { t, formatNumber } = useTranslation();
   return (
     <article className="rounded-panel border border-line bg-paper p-4">
       <div className="mb-3 flex items-start gap-3">
@@ -1658,45 +1657,47 @@ function SelectedLensCard({ lens }: { lens: Lens }) {
           <Aperture size={18} />
         </span>
         <div className="min-w-0">
-          <p className="m-0 text-xs font-bold uppercase text-muted">Objectif sélectionné</p>
+          <p className="m-0 text-xs font-bold uppercase text-muted">{t("Objectif sélectionné")}</p>
           <h4 className="m-0 break-words text-base font-bold text-ink">
             {lens.brand} {lens.model}
           </h4>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <SelectedSpec label="Focale" value={`${formatNumber(lens.focalLengthMm)} mm`} />
-        <SelectedSpec label="Type" value={lens.lensType} />
-        <SelectedSpec label="Monture" value={lens.mount} />
-        <SelectedSpec label="Format" value={lens.sensorFormat} />
-        <SelectedSpec label="Diagonale max" value={`${formatNumber(lens.maxSensorDiagonalMm)} mm`} />
-        <SelectedSpec label="Focus min" value={`${formatNumber(lens.minWorkingDistanceMm || lens.minFocusDistanceMm)} mm`} />
+        <SelectedSpec label={t("Focale")} value={`${formatNumber(lens.focalLengthMm)} mm`} />
+        <SelectedSpec label={t("Type")} value={lens.lensType} />
+        <SelectedSpec label={t("Monture")} value={lens.mount} />
+        <SelectedSpec label={t("Format")} value={lens.sensorFormat} />
+        <SelectedSpec label={t("Diagonale max")} value={`${formatNumber(lens.maxSensorDiagonalMm)} mm`} />
+        <SelectedSpec label={t("Focus min")} value={`${formatNumber(lens.minWorkingDistanceMm || lens.minFocusDistanceMm)} mm`} />
       </div>
     </article>
   );
 }
 
 function SelectedSpec({ label, value }: { label: string; value?: string }) {
+  const { t } = useTranslation();
   return (
     <div className="min-h-[58px] rounded-md border border-line bg-white p-2">
       <span className="block text-[11px] font-bold uppercase text-muted">{label}</span>
       <strong className="mt-1 block break-words text-xs text-ink">
-        {value && value.trim() ? value : "Non renseigné"}
+        {value && value.trim() ? t(value) : t("Non renseigné")}
       </strong>
     </div>
   );
 }
 
 function SpecsModal({ camera, lens, onClose }: { camera: Camera; lens: Lens; onClose: () => void }) {
+  const { t, formatNumber } = useTranslation();
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/45 p-4">
       <section className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-panel border border-line bg-white p-5 shadow-panel">
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <p className="mb-1 text-xs font-bold uppercase text-muted">Configuration sélectionnée</p>
-            <h3 className="m-0 text-lg font-bold text-ink">Caractéristiques caméra + objectif</h3>
+            <p className="mb-1 text-xs font-bold uppercase text-muted">{t("Configuration sélectionnée")}</p>
+            <h3 className="m-0 text-lg font-bold text-ink">{t("Caractéristiques caméra + objectif")}</h3>
           </div>
-          <button className={ui.iconButton} type="button" onClick={onClose} title="Fermer">
+          <button className={ui.iconButton} type="button" onClick={onClose} title={t("Fermer")} aria-label={t("Fermer")}>
             ×
           </button>
         </div>
@@ -1705,24 +1706,24 @@ function SpecsModal({ camera, lens, onClose }: { camera: Camera; lens: Lens; onC
           <section className="rounded-panel border border-line bg-paper p-4">
             <div className="mb-4 flex items-center gap-2 text-cyan">
               <CameraIcon size={18} />
-              <h4 className="m-0 text-base font-bold text-ink">Caméra</h4>
+              <h4 className="m-0 text-base font-bold text-ink">{t("Caméra")}</h4>
             </div>
             <SpecHeader brand={camera.brand} model={camera.model} />
             <div className="mt-4 grid gap-2">
-              <SpecRow label="Type" value={camera.cameraType} />
-              <SpecRow label="Capteur" value={`${camera.sensorSupplier} ${camera.sensorModel}`.trim()} />
-              <SpecRow label="Technologie" value={camera.sensorTechnology} />
-              <SpecRow label="Mono / couleur" value={camera.colorMode} />
-              <SpecRow label="Format capteur" value={camera.sensorFormat} />
-              <SpecRow label="Résolution" value={`${camera.resolutionWidth} x ${camera.resolutionHeight} px`} />
-              <SpecRow label="Taille capteur" value={`${formatNumber(camera.sensorWidthMm)} x ${formatNumber(camera.sensorHeightMm)} mm`} />
-              <SpecRow label="Pixel" value={`${formatNumber(camera.pixelSizeUm)} um`} />
-              <SpecRow label="FPS max" value={`${formatNumber(camera.maxFps)} fps`} />
-              <SpecRow label="Interface" value={camera.interfaceType} />
-              <SpecRow label="Obturateur" value={camera.shutter} />
-              <SpecRow label="Monture" value={camera.lensMount} />
+              <SpecRow label={t("Type")} value={camera.cameraType} />
+              <SpecRow label={t("Capteur")} value={`${camera.sensorSupplier} ${camera.sensorModel}`.trim()} />
+              <SpecRow label={t("Technologie")} value={camera.sensorTechnology} />
+              <SpecRow label={t("Mono / couleur")} value={camera.colorMode} />
+              <SpecRow label={t("Format capteur")} value={camera.sensorFormat} />
+              <SpecRow label={t("Résolution")} value={`${camera.resolutionWidth} x ${camera.resolutionHeight} px`} />
+              <SpecRow label={t("Taille capteur")} value={`${formatNumber(camera.sensorWidthMm)} x ${formatNumber(camera.sensorHeightMm)} mm`} />
+              <SpecRow label={t("Pixel")} value={`${formatNumber(camera.pixelSizeUm)} um`} />
+              <SpecRow label={t("FPS max")} value={`${formatNumber(camera.maxFps)} fps`} />
+              <SpecRow label={t("Interface")} value={camera.interfaceType} />
+              <SpecRow label={t("Obturateur")} value={camera.shutter} />
+              <SpecRow label={t("Monture")} value={camera.lensMount} />
               <SpecRow label="Bits" value={camera.bitDepth} />
-              <SpecRow label="Exposition" value={camera.exposureRange} />
+              <SpecRow label={t("Exposition")} value={camera.exposureRange} />
               <SpecRow label="URL" value={camera.sourceUrl} />
             </div>
           </section>
@@ -1730,21 +1731,21 @@ function SpecsModal({ camera, lens, onClose }: { camera: Camera; lens: Lens; onC
           <section className="rounded-panel border border-line bg-paper p-4">
             <div className="mb-4 flex items-center gap-2 text-cyan">
               <Aperture size={18} />
-              <h4 className="m-0 text-base font-bold text-ink">Objectif</h4>
+              <h4 className="m-0 text-base font-bold text-ink">{t("Objectif")}</h4>
             </div>
             <SpecHeader brand={lens.brand} model={lens.model} />
             <div className="mt-4 grid gap-2">
-              <SpecRow label="Focale" value={`${formatNumber(lens.focalLengthMm)} mm`} />
-              <SpecRow label="Monture" value={lens.mount} />
-              <SpecRow label="Format capteur" value={lens.sensorFormat} />
-              <SpecRow label="Diagonale max" value={`${formatNumber(lens.maxSensorDiagonalMm)} mm`} />
-              <SpecRow label="Ouverture" value={`f/${formatNumber(lens.apertureMin)} - f/${formatNumber(lens.apertureMax)}`} />
-              <SpecRow label="Focus min" value={`${formatNumber(lens.minFocusDistanceMm)} mm`} />
-              <SpecRow label="Min. distance travail" value={`${formatNumber(lens.minWorkingDistanceMm)} mm`} />
-              <SpecRow label="Distance travail rec." value={lens.recommendedWorkingDistanceMm ? `${formatNumber(lens.recommendedWorkingDistanceMm)} mm` : ""} />
-              <SpecRow label="Type" value={lens.lensType} />
-              <SpecRow label="Résolution optique" value={lens.opticalResolutionMp ? `${formatNumber(lens.opticalResolutionMp)} MP` : ""} />
-              <SpecRow label="Distorsion" value={lens.distortion} />
+              <SpecRow label={t("Focale")} value={`${formatNumber(lens.focalLengthMm)} mm`} />
+              <SpecRow label={t("Monture")} value={lens.mount} />
+              <SpecRow label={t("Format capteur")} value={lens.sensorFormat} />
+              <SpecRow label={t("Diagonale max")} value={`${formatNumber(lens.maxSensorDiagonalMm)} mm`} />
+              <SpecRow label={t("Ouverture")} value={`f/${formatNumber(lens.apertureMin)} - f/${formatNumber(lens.apertureMax)}`} />
+              <SpecRow label={t("Focus min")} value={`${formatNumber(lens.minFocusDistanceMm)} mm`} />
+              <SpecRow label={t("Min. distance travail")} value={`${formatNumber(lens.minWorkingDistanceMm)} mm`} />
+              <SpecRow label={t("Distance travail rec.")} value={lens.recommendedWorkingDistanceMm ? `${formatNumber(lens.recommendedWorkingDistanceMm)} mm` : ""} />
+              <SpecRow label={t("Type")} value={lens.lensType} />
+              <SpecRow label={t("Résolution optique")} value={lens.opticalResolutionMp ? `${formatNumber(lens.opticalResolutionMp)} MP` : ""} />
+              <SpecRow label={t("Distorsion")} value={lens.distortion} />
               <SpecRow label="URL" value={lens.sourceUrl} />
             </div>
           </section>
@@ -1755,19 +1756,21 @@ function SpecsModal({ camera, lens, onClose }: { camera: Camera; lens: Lens; onC
 }
 
 function SpecHeader({ brand, model }: { brand: string; model: string }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-md border border-line bg-white p-3">
-      <p className="m-0 text-xs font-bold uppercase text-muted">{brand || "Non renseigné"}</p>
-      <strong className="mt-1 block text-ink">{model || "Non renseigné"}</strong>
+      <p className="m-0 text-xs font-bold uppercase text-muted">{brand || t("Non renseigné")}</p>
+      <strong className="mt-1 block text-ink">{model || t("Non renseigné")}</strong>
     </div>
   );
 }
 
 function SpecRow({ label, value }: { label: string; value?: string }) {
+  const { t } = useTranslation();
   return (
     <div className="grid gap-1 rounded-md border border-line bg-white p-3 md:grid-cols-[160px_minmax(0,1fr)]">
       <span className="text-xs font-bold uppercase text-muted">{label}</span>
-      <span className="min-w-0 break-words text-sm text-ink">{value && value.trim() ? value : "Non renseigné"}</span>
+      <span className="min-w-0 break-words text-sm text-ink">{value && value.trim() ? t(value) : t("Non renseigné")}</span>
     </div>
   );
 }
@@ -1804,6 +1807,7 @@ function SelectFilter(props: {
   suffix?: string;
   digits?: number;
 }) {
+  const { t, formatNumber } = useTranslation();
   return (
     <label className="grid gap-2 text-xs font-bold uppercase tracking-normal text-muted">
       <span>{props.label}</span>
@@ -1812,7 +1816,7 @@ function SelectFilter(props: {
         value={props.value === null || props.value === undefined ? "" : String(props.value)}
         onChange={(event) => props.onChange(parseNumberInput(event.target.value))}
       >
-        <option value="">Toutes</option>
+        <option value="">{t("Toutes")}</option>
         {props.options.map((option) => (
           <option value={option} key={option}>
             {formatNumber(option, props.digits ?? 2)}{props.suffix ? ` ${props.suffix}` : ""}

@@ -60,6 +60,13 @@
   .nav-button.is-active { color: var(--accent); border-bottom-color: var(--accent); }
   .github-link { display: inline-flex; align-items: center; flex-shrink: 0; gap: 8px; padding: 9px 13px; border: 1px solid var(--line); border-radius: 999px; font-size: .75rem; font-weight: 600; color: var(--muted); text-decoration: none; }
   .github-link:hover { color: var(--accent); border-color: var(--accent); }
+  .header-actions { display: flex; flex-shrink: 0; align-items: center; gap: 12px; }
+  .language-switcher { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 999px; }
+  .language-switcher button { min-height: 32px; padding: 4px 10px; border-radius: 999px; color: var(--muted); font-size: .75rem; font-weight: 700; }
+  .language-switcher button[aria-pressed="true"] { background: var(--text); color: var(--surface); }
+  .language-switcher button:hover { background: var(--surface-soft); color: var(--text); }
+  .language-switcher button[aria-pressed="true"]:hover { background: var(--text); color: var(--surface); }
+  .import-control:focus-within .cta { outline: 2px solid var(--cyan); outline-offset: 3px; }
   .page-container { min-width: 0; padding-block: 48px 56px; }
   .page-intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 40px; margin-bottom: 38px; }
   .eyebrow { margin: 0 0 16px; color: var(--accent); font-size: .72rem; font-weight: 750; letter-spacing: .16em; text-transform: uppercase; }

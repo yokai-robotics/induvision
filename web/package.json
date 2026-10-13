@@ -9,7 +9,7 @@
     "prebuild": "npm run catalog:build",
     "build": "next build",
     "start": "node scripts/serve.mjs",
-    "lint": "eslint app components lib",
+    "lint": "eslint app components lib i18n",
     "test": "node --experimental-strip-types --test tests/*.test.mjs"
   },
   "dependencies": {
