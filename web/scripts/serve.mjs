@@ -1,9 +1,8 @@
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { staticRoot as root } from "./paths.mjs";
 
-const root = fileURLToPath(new URL("../out/", import.meta.url));
 const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".txt": "text/plain; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon", ".woff2": "font/woff2" };
 await stat(path.join(root, "index.html")).catch(() => { throw new Error("Lance npm run build avant npm start."); });
 const server = createServer(async (request, response) => {

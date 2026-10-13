@@ -22,13 +22,16 @@ import {
   TriangleAlert,
   X
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { cameraMegapixels, filterCameras, objectPixelsAtDistance, rankConfigurations, simulateConfiguration } from "./calculations";
-import { initialStudyConfig } from "./data";
-import { Camera, Lens, NumericValue, Study, StudyConfig } from "./types";
+import { usePathname } from "next/navigation";
+import { sectionForPath, sectionRoutes } from "../lib/routes";
+import { createStudyId } from "../lib/ids";
+import { cameraMegapixels, filterCameras, objectPixelsAtDistance, rankConfigurations, simulateConfiguration } from "../app/calculations";
+import { initialStudyConfig } from "../app/data";
+import { Camera, Lens, NumericValue, Study, StudyConfig } from "../app/types";
 import catalog from "../data/catalog.generated.json";
-import { CatalogPanel } from "../components/CatalogPanel";
+import { CatalogPanel } from "./CatalogPanel";
 import { MAX_IMPORT_BYTES, STUDIES_KEY, mergeImportedStudies, parseStudies, repairReferences, serializeStudies, writeStudies } from "../lib/studies";
 
 const catalogCameras = catalog.cameras as Camera[];
@@ -43,7 +46,6 @@ function downloadStudies(studies: Study[]) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-type Tab = "study" | "cameras" | "lenses" | "network";
 type RankedMatch = ReturnType<typeof rankConfigurations>[number];
 type ComparisonPair = {
   cameraId: string;
@@ -214,9 +216,8 @@ function networkThroughput(params: { width: NumericValue; height: NumericValue; 
   };
 }
 
-export default function Home() {
+function useStudyWorkspace() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<Tab>("study");
   const [studies, setStudies] = useState<Study[]>([]);
   const [activeStudyId, setActiveStudyId] = useState("");
   const cameras = catalogCameras;
@@ -265,7 +266,7 @@ export default function Home() {
     } catch {
       setDataStatus("Les études locales sont illisibles ou le stockage est indisponible. Les données existantes sont conservées. Tu peux travailler et exporter ton étude, mais l’enregistrement local est désactivé.");
     }
-    const firstStudy = nextStudies[0] ?? repairReferences({ ...createDefaultStudy(newStudyName), id: crypto.randomUUID() }, cameras, lenses);
+    const firstStudy = nextStudies[0] ?? repairReferences({ ...createDefaultStudy(newStudyName), id: createStudyId() }, cameras, lenses);
     setStudies(nextStudies.length ? nextStudies : [firstStudy]);
     setActiveStudyId(firstStudy.id);
     setStudy(firstStudy);
@@ -291,7 +292,7 @@ export default function Home() {
       if (file.size > MAX_IMPORT_BYTES) throw new Error("Le fichier dépasse 2 Mo.");
       const imported = parseStudies(await file.text()).map((item) => repairReferences(item, cameras, lenses));
       if (!imported.length) throw new Error("Le fichier ne contient aucune étude.");
-      const nextStudies = mergeImportedStudies(studies, imported, () => crypto.randomUUID());
+      const nextStudies = mergeImportedStudies(studies, imported, () => createStudyId());
       if (!persist(nextStudies)) return;
       const first = nextStudies[0];
       setActiveStudyId(first.id); setStudy(first);
@@ -338,14 +339,14 @@ export default function Home() {
   }
 
   function createStudy() {
-    const nextStudy = repairReferences({ ...createDefaultStudy(t("Étude {number}", { number: studies.length + 1 })), id: crypto.randomUUID(), createdAt: new Date().toISOString() }, cameras, lenses);
+    const nextStudy = repairReferences({ ...createDefaultStudy(t("Étude {number}", { number: studies.length + 1 })), id: createStudyId(), createdAt: new Date().toISOString() }, cameras, lenses);
     if (!persist([nextStudy, ...studies])) return;
     setActiveStudyId(nextStudy.id); setStudy(nextStudy);
     setSelectedCameraId(nextStudy.selectedCameraId ?? ""); setSelectedLensId(nextStudy.selectedLensId ?? "");
   }
 
   async function saveStudy(comparisonPairs = study.comparisonPairs) {
-    const nextStudy = { ...study, id: study.id || crypto.randomUUID(), selectedCameraId, selectedLensId, comparisonPairs, updatedAt: new Date().toISOString() };
+    const nextStudy = { ...study, id: study.id || createStudyId(), selectedCameraId, selectedLensId, comparisonPairs, updatedAt: new Date().toISOString() };
     const exists = studies.some((item) => item.id === nextStudy.id);
     const nextStudies = exists ? studies.map((item) => item.id === nextStudy.id ? nextStudy : item) : [nextStudy, ...studies];
     if (!persist(nextStudies)) return false;
@@ -356,7 +357,7 @@ export default function Home() {
   function deleteStudy() {
     const remaining = studies.filter((item) => item.id !== study.id);
     if (!persist(remaining)) return;
-    const nextStudy = remaining[0] ?? repairReferences({ ...createDefaultStudy(t("Nouvelle étude")), id: crypto.randomUUID() }, cameras, lenses);
+    const nextStudy = remaining[0] ?? repairReferences({ ...createDefaultStudy(t("Nouvelle étude")), id: createStudyId() }, cameras, lenses);
     setActiveStudyId(nextStudy.id); setStudy(nextStudy);
     setSelectedCameraId(nextStudy.selectedCameraId ?? ""); setSelectedLensId(nextStudy.selectedLensId ?? "");
   }
@@ -376,130 +377,171 @@ export default function Home() {
     selectLens(lensId);
   }
 
-  return (
-    <div className={cx("app-shell", activeTab === "study" && "has-study-actions")}>
-      <a className="skip-link" href="#main">{t("Aller au contenu")}</a>
-      <header className="site-header">
-        <Link className="brand" href="/" aria-label={t("InduVision, accueil")}>
-          <span className="brand-mark" aria-hidden="true"><ScanLine size={32} strokeWidth={1.6} /></span>
-          <span className="brand-text">
-            <span className="brand-name">InduVision</span>
-            <span className="brand-mantra">{t("Outil d'aide pour la Vision")}</span>
-          </span>
-        </Link>
-        <nav className="site-nav" aria-label={t("Navigation principale")}>
-          <NavButton icon={<Activity size={17} />} label={t("Étude")} active={activeTab === "study"} onClick={() => setActiveTab("study")} />
-          <NavButton icon={<CameraIcon size={17} />} label={t("Caméras")} active={activeTab === "cameras"} onClick={() => setActiveTab("cameras")} />
-          <NavButton icon={<Aperture size={17} />} label={t("Objectifs")} active={activeTab === "lenses"} onClick={() => setActiveTab("lenses")} />
-          <NavButton icon={<Network size={17} />} label={t("Réseau GigE")} active={activeTab === "network"} onClick={() => setActiveTab("network")} />
-        </nav>
-        <div className="header-actions">
-          <a className="github-link" href="https://github.com/" target="_blank" rel="noopener noreferrer"><Github size={16} aria-hidden="true" />GitHub</a>
-          <LanguageSwitcher />
-        </div>
-      </header>
+  return { studies, activeStudyId, cameras, lenses, selectedCameraId, selectedLensId, study, dataStatus, storageReady, selectedCamera, selectedLens, result, recommendations, selectStudy, createStudy, saveStudy, importStudies, deleteStudy, selectCamera, selectLens, updateStudy, updateStudyName, applyRecommendation };
+}
 
-      <main id="main" className="page-container" tabIndex={-1}>
-        <header className="page-intro">
-          <div className="intro-copy">
-            <p className={ui.eyebrow}>{activeTab === "study" ? t("Outil de dimensionnement en vision industrielle") : activeTab === "network" ? t("Dimensionner l’acquisition") : t("Le catalogue technique")}</p>
-            <h1 className="page-title">
-              {activeTab === "study" ? t("Choisissez votre caméra et votre objectif") : activeTab === "cameras" ? t("Annuaire caméras") : activeTab === "lenses" ? t("Annuaire objectifs") : t("Calcul réseau GigE")}
-            </h1>
-            <p className="intro-description">
-              {activeTab === "study" ? t("Renseignez la zone à observer, la taille des détails à détecter et la distance de prise de vue. Comparez les couples caméra–objectif et vérifiez le champ couvert, la résolution et le flou de mouvement pour votre application.") : activeTab === "cameras" ? t("Résolution, capteur, cadence : explorez les caractéristiques pour choisir une caméra adaptée à votre application.") : activeTab === "lenses" ? t("Focale, format et distance de travail : trouvez l’optique qui correspond à votre capteur.") : t("Estimez le débit de vos caméras et choisissez une liaison réseau adaptée à votre acquisition.")}
-            </p>
-          </div>
-          <div className="catalog-metrics" aria-label={t("Votre espace et le catalogue")}>
-            <Metric label={t("Études")} value={studies.length.toString()} />
-            <Metric label={t("Caméras")} value={cameras.length.toString()} />
-            <Metric label={t("Objectifs")} value={lenses.length.toString()} />
+const WorkspaceContext = createContext<ReturnType<typeof useStudyWorkspace> | null>(null);
+
+function useWorkspace() {
+  const workspace = useContext(WorkspaceContext);
+  if (!workspace) throw new Error("useWorkspace must be used inside VisionWorkspace");
+  return workspace;
+}
+
+export function VisionWorkspace({ children }: { children: React.ReactNode }) {
+  const workspace = useStudyWorkspace();
+  const { studies, cameras, lenses } = workspace;
+  const { t } = useTranslation();
+  const activeTab = sectionForPath(usePathname());
+
+  const titles = { study: t("Étude"), cameras: t("Caméras"), lenses: t("Objectifs"), network: t("Réseau GigE") };
+
+  return (
+    <WorkspaceContext.Provider value={workspace}>
+      <title>{`${titles[activeTab]} | InduVision`}</title>
+      <div className={cx("app-shell", activeTab === "study" && "has-study-actions")}>
+        <a className="skip-link" href="#main">{t("Aller au contenu")}</a>
+        <header className="site-header">
+          <Link className="brand" href={sectionRoutes.study} aria-label={t("InduVision, accueil")}>
+            <span className="brand-mark" aria-hidden="true"><ScanLine size={32} strokeWidth={1.6} /></span>
+            <span className="brand-text">
+              <span className="brand-name">InduVision</span>
+              <span className="brand-mantra">{t("Outil d'aide pour la Vision")}</span>
+            </span>
+          </Link>
+          <nav className="site-nav" aria-label={t("Navigation principale")}>
+            <NavLink icon={<Activity size={17} />} label={t("Étude")} active={activeTab === "study"} href={sectionRoutes.study} />
+            <NavLink icon={<CameraIcon size={17} />} label={t("Caméras")} active={activeTab === "cameras"} href={sectionRoutes.cameras} />
+            <NavLink icon={<Aperture size={17} />} label={t("Objectifs")} active={activeTab === "lenses"} href={sectionRoutes.lenses} />
+            <NavLink icon={<Network size={17} />} label={t("Réseau GigE")} active={activeTab === "network"} href={sectionRoutes.network} />
+          </nav>
+          <div className="header-actions">
+            <a className="github-link" href="https://github.com/yokai-robotics" target="_blank" rel="noopener noreferrer"><Github size={16} aria-hidden="true" />GitHub</a>
+            <LanguageSwitcher />
           </div>
         </header>
 
-        {activeTab === "study" && (
-          <section className="study-storage">
-            <div className="storage-copy"><span className="storage-icon" aria-hidden="true"><CheckCircle2 size={20} /></span><p className="m-0 text-sm text-muted" role="status">{t(dataStatus)}</p></div>
-            <div className="min-w-0">
-              <label className={cx("import-control grid gap-2 text-xs font-semibold text-muted", !storageReady && "cursor-not-allowed opacity-45")}>
-                <span>{t("Importer des études JSON")}</span>
-                <span className="cta cta-secondary cursor-pointer" aria-hidden="true">{t("Choisir un fichier JSON")}</span>
-                <input className="sr-only" aria-label={t("Importer des études JSON")} type="file" accept="application/json,.json" disabled={!storageReady} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void importStudies(file); }} />
-              </label>
+        <main id="main" className="page-container" tabIndex={-1}>
+          <header className="page-intro">
+            <div className="intro-copy">
+              <p className={ui.eyebrow}>{activeTab === "study" ? t("Outil de dimensionnement en vision industrielle") : activeTab === "network" ? t("Dimensionner l’acquisition") : t("Le catalogue technique")}</p>
+              <h1 className="page-title">
+                {activeTab === "study" ? t("Choisissez votre caméra et votre objectif") : activeTab === "cameras" ? t("Annuaire caméras") : activeTab === "lenses" ? t("Annuaire objectifs") : t("Calcul réseau GigE")}
+              </h1>
+              <p className="intro-description">
+                {activeTab === "study" ? t("Renseignez la zone à observer, la taille des détails à détecter et la distance de prise de vue. Comparez les couples caméra–objectif et vérifiez le champ couvert, la résolution et le flou de mouvement pour votre application.") : activeTab === "cameras" ? t("Résolution, capteur, cadence : explorez les caractéristiques pour choisir une caméra adaptée à votre application.") : activeTab === "lenses" ? t("Focale, format et distance de travail : trouvez l’optique qui correspond à votre capteur.") : t("Estimez le débit de vos caméras et choisissez une liaison réseau adaptée à votre acquisition.")}
+              </p>
             </div>
-          </section>
-        )}
-        {activeTab === "study" && selectedCamera && selectedLens && result && (
-          <StudyPanel
-            key={study.id}
-            cameras={cameras}
-            allCameras={cameras}
-            lenses={lenses}
-            studies={studies}
-            activeStudyId={activeStudyId}
-            selectStudy={selectStudy}
-            createStudy={createStudy}
-            saveStudy={saveStudy}
-            exportStudy={(comparisonPairs) => downloadStudies([{ ...study, selectedCameraId, selectedLensId, comparisonPairs }])}
-            exportAllStudies={(comparisonPairs) => {
-              const current = { ...study, selectedCameraId, selectedLensId, comparisonPairs };
-              downloadStudies(studies.some((item) => item.id === study.id) ? studies.map((item) => item.id === study.id ? current : item) : [...studies, current]);
-            }}
-            storageReady={storageReady}
-            deleteStudy={deleteStudy}
-            selectedCameraId={selectedCameraId}
-            selectedLensId={selectedLensId}
-            setSelectedCameraId={selectCamera}
-            setSelectedLensId={selectLens}
-            study={study}
-            updateStudy={updateStudy}
-            updateStudyName={updateStudyName}
-            result={result}
-            recommendations={recommendations}
-            applyRecommendation={applyRecommendation}
-            selectedCamera={selectedCamera}
-            selectedLens={selectedLens}
-          />
-        )}
-        {activeTab === "study" && (!selectedCamera || !selectedLens || !result) && (
-          <section className={ui.panel}>
-            <p className="m-0 font-bold text-ink">
-              {!cameras.length
-                ? t("Aucune caméra disponible.")
-                : !selectedCamera
-                  ? t("Aucune caméra ne correspond aux filtres appliqués.")
-                  : !lenses.length
-                    ? t("Aucun objectif disponible.")
-                    : t("Sélection incomplète.")}
-            </p>
-            <p className="mt-1 mb-0 text-sm text-muted">{t(dataStatus)}</p>
-          </section>
-        )}
+            <div className="catalog-metrics" aria-label={t("Votre espace et le catalogue")}>
+              <Metric label={t("Études")} value={studies.length.toString()} />
+              <Metric label={t("Caméras")} value={cameras.length.toString()} />
+              <Metric label={t("Objectifs")} value={lenses.length.toString()} />
+            </div>
+          </header>
 
-        {activeTab === "cameras" && <CatalogPanel title={t("Caméras")} items={cameras} />}
-        {activeTab === "lenses" && <CatalogPanel title={t("Objectifs")} items={lenses} />}
+          {children}
 
-        {activeTab === "network" && (
-          <NetworkPanel cameras={cameras} />
-        )}
-
-      </main>
-      <footer className="site-footer">
-        <a className="provider-link" href="https://yokainco.com/" target="_blank" rel="noopener noreferrer">
-          <Image src="/logo-yokai-robotics.png" alt={t("Logo Yokaï Robotics")} width={64} height={64} unoptimized />
-          <span>{t("Un outil proposé par ")}<strong>Yokaï Robotics</strong><span className="provider-domain">yokainco.com ↗</span></span>
-        </a>
-        <span>{t("Vos études restent dans votre navigateur.")}</span>
-      </footer>
-    </div>
+        </main>
+        <footer className="site-footer">
+          <a className="provider-link" href="https://yokainco.com/" target="_blank" rel="noopener noreferrer">
+            <Image src="/logo-yokai-robotics.png" alt={t("Logo Yokaï Robotics")} width={64} height={64} unoptimized />
+            <span>{t("Un outil proposé par ")}<strong>Yokaï Robotics</strong><span className="provider-domain">yokainco.com ↗</span></span>
+          </a>
+          <span>{t("Vos études restent dans votre navigateur.")}</span>
+        </footer>
+      </div>
+    </WorkspaceContext.Provider>
   );
 }
 
-function NavButton(props: { icon: React.ReactNode; label: string; active: boolean; onClick: () => void }) {
+export function StudyPage() {
+  const { t } = useTranslation();
+  const { studies, activeStudyId, cameras, lenses, selectedCameraId, selectedLensId, study, dataStatus, storageReady, selectedCamera, selectedLens, result, recommendations, selectStudy, createStudy, saveStudy, importStudies, deleteStudy, selectCamera, selectLens, updateStudy, updateStudyName, applyRecommendation } = useWorkspace();
   return (
-    <button type="button" className={cx("nav-button", props.active && "is-active")} aria-current={props.active ? "page" : undefined} onClick={props.onClick}>
+    <>
+      <section className="study-storage">
+        <div className="storage-copy"><span className="storage-icon" aria-hidden="true"><CheckCircle2 size={20} /></span><p className="m-0 text-sm text-muted" role="status">{t(dataStatus)}</p></div>
+        <div className="min-w-0">
+          <label className={cx("import-control grid gap-2 text-xs font-semibold text-muted", !storageReady && "cursor-not-allowed opacity-45")}>
+            <span>{t("Importer des études JSON")}</span>
+            <span className="cta cta-secondary cursor-pointer" aria-hidden="true">{t("Choisir un fichier JSON")}</span>
+            <input className="sr-only" aria-label={t("Importer des études JSON")} type="file" accept="application/json,.json" disabled={!storageReady} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void importStudies(file); }} />
+          </label>
+        </div>
+      </section>
+      {selectedCamera && selectedLens && result && (
+        <StudyPanel
+          key={study.id}
+          cameras={cameras}
+          allCameras={cameras}
+          lenses={lenses}
+          studies={studies}
+          activeStudyId={activeStudyId}
+          selectStudy={selectStudy}
+          createStudy={createStudy}
+          saveStudy={saveStudy}
+          exportStudy={(comparisonPairs) => downloadStudies([{ ...study, selectedCameraId, selectedLensId, comparisonPairs }])}
+          exportAllStudies={(comparisonPairs) => {
+            const current = { ...study, selectedCameraId, selectedLensId, comparisonPairs };
+            downloadStudies(studies.some((item) => item.id === study.id) ? studies.map((item) => item.id === study.id ? current : item) : [...studies, current]);
+          }}
+          storageReady={storageReady}
+          deleteStudy={deleteStudy}
+          selectedCameraId={selectedCameraId}
+          selectedLensId={selectedLensId}
+          setSelectedCameraId={selectCamera}
+          setSelectedLensId={selectLens}
+          study={study}
+          updateStudy={updateStudy}
+          updateStudyName={updateStudyName}
+          result={result}
+          recommendations={recommendations}
+          applyRecommendation={applyRecommendation}
+          selectedCamera={selectedCamera}
+          selectedLens={selectedLens}
+        />
+      )}
+      {(!selectedCamera || !selectedLens || !result) && (
+        <section className={ui.panel}>
+          <p className="m-0 font-bold text-ink">
+            {!cameras.length
+              ? t("Aucune caméra disponible.")
+              : !selectedCamera
+                ? t("Aucune caméra ne correspond aux filtres appliqués.")
+                : !lenses.length
+                  ? t("Aucun objectif disponible.")
+                  : t("Sélection incomplète.")}
+          </p>
+          <p className="mt-1 mb-0 text-sm text-muted">{t(dataStatus)}</p>
+        </section>
+      )}
+
+    </>
+  );
+}
+
+export function CamerasPage() {
+  const { cameras } = useWorkspace();
+  const { t } = useTranslation();
+  return <CatalogPanel title={t("Caméras")} items={cameras} />;
+}
+
+export function LensesPage() {
+  const { lenses } = useWorkspace();
+  const { t } = useTranslation();
+  return <CatalogPanel title={t("Objectifs")} items={lenses} />;
+}
+
+export function GigEPage() {
+  const { cameras } = useWorkspace();
+  return <NetworkPanel cameras={cameras} />;
+}
+
+function NavLink(props: { icon: React.ReactNode; label: string; active: boolean; href: string }) {
+  return (
+    <Link className={cx("nav-button", props.active && "is-active")} aria-current={props.active ? "page" : undefined} href={props.href}>
       {props.icon}<span>{props.label}</span>
-    </button>
+    </Link>
   );
 }
 

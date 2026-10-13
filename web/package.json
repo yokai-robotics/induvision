@@ -8,6 +8,7 @@
     "catalog:build": "node scripts/catalog.mjs",
     "prebuild": "npm run catalog:build",
     "build": "next build",
+    "postbuild": "node scripts/export.mjs",
     "start": "node scripts/serve.mjs",
     "lint": "eslint app components lib i18n",
     "test": "node --experimental-strip-types --test tests/*.test.mjs"

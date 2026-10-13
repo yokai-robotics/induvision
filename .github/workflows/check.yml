@@ -26,5 +26,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: induvision-static
-          path: web/out
+          path: out/oqjljzdba7
           retention-days: 7

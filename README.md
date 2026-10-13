@@ -15,6 +15,9 @@ they meet your imaging requirements.
 - Estimate camera bandwidth requirements for GigE networks.
 - Save studies in your browser and transfer them through JSON import and export.
 
+The study tool, camera catalog, lens catalog, and GigE calculator each have their
+own page: `/study/`, `/cameras/`, `/lenses/`, and `/gige/`.
+
 ## How it works
 
 InduVision runs as a static website, with no accounts, database, or server API.
@@ -25,3 +28,6 @@ let you keep a backup or move them to another device.
 
 The interface is available in French and English. Use the FR / EN selector to
 switch languages; your choice is remembered in your browser.
+
+Run `npm run build` from the project root to generate the static site in
+`out/oqjljzdba7/`.

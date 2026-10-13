@@ -1,0 +1,14 @@
+{
+  "name": "induvision-project",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "setup": "npm --prefix web ci",
+    "dev": "npm --prefix web run dev",
+    "catalog:build": "npm --prefix web run catalog:build",
+    "test": "npm --prefix web test",
+    "lint": "npm --prefix web run lint",
+    "build": "npm --prefix web run build",
+    "start": "npm --prefix web start"
+  }
+}
