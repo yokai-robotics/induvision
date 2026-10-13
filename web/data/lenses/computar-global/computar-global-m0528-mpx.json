@@ -1,0 +1,16 @@
+{
+  "id": "computar-global-m0528-mpx",
+  "brand": "Computar Global",
+  "model": "M0528-MPX",
+  "focalLengthMm": 5.5,
+  "mount": "C-Mount",
+  "sensorFormat": "2/3\"",
+  "maxSensorDiagonalMm": null,
+  "apertureMin": null,
+  "apertureMax": null,
+  "minFocusDistanceMm": null,
+  "minWorkingDistanceMm": null,
+  "recommendedWorkingDistanceMm": null,
+  "lensType": "",
+  "opticalResolutionMp": null
+}

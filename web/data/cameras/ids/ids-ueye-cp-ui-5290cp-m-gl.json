@@ -1,0 +1,23 @@
+{
+  "id": "ids-ueye-cp-ui-5290cp-m-gl",
+  "brand": "IDS",
+  "model": "uEye CP UI-5290CP-M-GL",
+  "cameraType": "Area scan",
+  "sensorTechnology": "CMOS",
+  "colorMode": "Monochrome",
+  "sensorFormat": "2/3\"",
+  "sensorSupplier": "Sony",
+  "sensorModel": "IMX264",
+  "resolutionWidth": 2464,
+  "resolutionHeight": 2056,
+  "sensorWidthMm": 8.5,
+  "sensorHeightMm": 7.09,
+  "pixelSizeUm": 3.45,
+  "maxFps": 36.0,
+  "interfaceType": "GigE Vision",
+  "shutter": "Global shutter",
+  "lensMount": "C-mount",
+  "bitDepth": "8 / 10 / 12 bits",
+  "exposureRange": "29 us - 2 s",
+  "notes": "Interface GigE pratique pour distances machine plus longues."
+}

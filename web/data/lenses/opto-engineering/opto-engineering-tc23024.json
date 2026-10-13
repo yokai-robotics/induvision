@@ -1,0 +1,18 @@
+{
+  "id": "opto-engineering-tc23024",
+  "brand": "Opto Engineering",
+  "model": "TC23024",
+  "focalLengthMm": 24.0,
+  "mount": "C-mount",
+  "sensorFormat": "2/3\"",
+  "maxSensorDiagonalMm": 11.0,
+  "apertureMin": 8.0,
+  "apertureMax": 16.0,
+  "minFocusDistanceMm": 220.0,
+  "minWorkingDistanceMm": 220.0,
+  "recommendedWorkingDistanceMm": 230.0,
+  "lensType": "Télécentrique",
+  "opticalResolutionMp": 5.0,
+  "distortion": "< 0.05%",
+  "notes": "Pour mesures dimensionnelles avec perspective réduite."
+}

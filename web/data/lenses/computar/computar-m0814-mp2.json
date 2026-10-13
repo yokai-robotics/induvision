@@ -1,0 +1,18 @@
+{
+  "id": "computar-m0814-mp2",
+  "brand": "Computar",
+  "model": "M0814-MP2",
+  "focalLengthMm": 8.0,
+  "mount": "C-mount",
+  "sensorFormat": "2/3\"",
+  "maxSensorDiagonalMm": 11.0,
+  "apertureMin": 1.4,
+  "apertureMax": 16.0,
+  "minFocusDistanceMm": 100.0,
+  "minWorkingDistanceMm": 100.0,
+  "recommendedWorkingDistanceMm": null,
+  "lensType": "Grand angle",
+  "opticalResolutionMp": 5.0,
+  "distortion": "Faible",
+  "notes": "Utile quand la distance disponible est courte."
+}

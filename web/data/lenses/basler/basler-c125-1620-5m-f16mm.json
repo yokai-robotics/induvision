@@ -1,0 +1,18 @@
+{
+  "id": "basler-c125-1620-5m-f16mm",
+  "brand": "Basler",
+  "model": "C125-1620-5M f16mm",
+  "sourceUrl": "https://www.baslerweb.com/fr-fr/shop/basler-lens-c125-1620-5m-f16mm/",
+  "focalLengthMm": 16.0,
+  "mount": "C-mount",
+  "sensorFormat": "1/2.5\"",
+  "maxSensorDiagonalMm": 1.0,
+  "apertureMin": 2.0,
+  "apertureMax": 22.0,
+  "minFocusDistanceMm": null,
+  "minWorkingDistanceMm": 200.0,
+  "recommendedWorkingDistanceMm": null,
+  "lensType": "Standard",
+  "opticalResolutionMp": 5.0,
+  "notes": "Numéro de commande: 2000034834\nLigne de produits: Premium\nGarantie: 36 mois\nType d'iris: manual\nFiltre IR Cut: Non\nPixel Pitch: 2.2 µm\nGamme de longueurs d'onde: Visible\n\nTexte source:\nInformations générales Numéro de commande 2000034834 Fabricant Basler Type Lens Type d'objectif Fixed Focal Lens Ligne de produits Premium Garantie 36 mois Données sur les lentilles Distance focale 16 mm Iris F2 - F22 Type d'iris manual Filtre IR Cut Non Pixel Pitch 2.2 µm Résolution 5 MP Monture C-mount Format du capteur 1/2.5\" min. Distance de travail 200 mm Gamme de longueurs d'onde Visible Fabricant Basler"
+}

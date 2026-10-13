@@ -1,0 +1,18 @@
+{
+  "id": "basler-c11-5020-12m-f50mm",
+  "brand": "Basler",
+  "model": "C11-5020-12M f50mm",
+  "sourceUrl": "https://www.baslerweb.com/fr-fr/shop/basler-lens-c11-5020-12m-f50mm/",
+  "focalLengthMm": 50.0,
+  "mount": "C-mount",
+  "sensorFormat": "1.1\"",
+  "maxSensorDiagonalMm": 1.1,
+  "apertureMin": 2.0,
+  "apertureMax": 16.0,
+  "minFocusDistanceMm": null,
+  "minWorkingDistanceMm": 200.0,
+  "recommendedWorkingDistanceMm": null,
+  "lensType": "Standard",
+  "opticalResolutionMp": 12.0,
+  "notes": "Numéro de commande: 2200000579\nLigne de produits: Premium\nGarantie: 36 mois\nType d'iris: manual\nFiltre IR Cut: Non\nPixel Pitch: 3.45 µm\nGamme de longueurs d'onde: Visible\n\nTexte source:\nInformations générales Numéro de commande 2200000579 Fabricant Basler Type Lens Type d'objectif Fixed Focal Lens Ligne de produits Premium Garantie 36 mois Données sur les lentilles Distance focale 50 mm Iris F2 - F16 Type d'iris manual Filtre IR Cut Non Pixel Pitch 3.45 µm Résolution 12 MP Monture C-mount Format du capteur 1.1\" min. Distance de travail 200 mm Gamme de longueurs d'onde Visible Fabricant Basler"
+}

@@ -1,0 +1,18 @@
+{
+  "id": "basler-c11-0824-12m-f8-5mm",
+  "brand": "Basler",
+  "model": "C11-0824-12M f8.5mm",
+  "sourceUrl": "https://www.baslerweb.com/fr-fr/shop/basler-lens-c11-0824-12m-f8-5mm/",
+  "focalLengthMm": 8.5,
+  "mount": "C-mount",
+  "sensorFormat": "1.1\"",
+  "maxSensorDiagonalMm": 1.1,
+  "apertureMin": 2.4,
+  "apertureMax": 16.0,
+  "minFocusDistanceMm": null,
+  "minWorkingDistanceMm": 100.0,
+  "recommendedWorkingDistanceMm": null,
+  "lensType": "Standard",
+  "opticalResolutionMp": 12.0,
+  "notes": "Numéro de commande: 2200000574\nLigne de produits: Premium\nGarantie: 36 mois\nType d'iris: manual\nFiltre IR Cut: Non\nPixel Pitch: 3.45 µm\nGamme de longueurs d'onde: Visible\n\nTexte source:\nInformations générales Numéro de commande 2200000574 Fabricant Basler Type Lens Type d'objectif Fixed Focal Lens Ligne de produits Premium Garantie 36 mois Données sur les lentilles Distance focale 8.5 mm Iris F2.4 - F16 Type d'iris manual Filtre IR Cut Non Pixel Pitch 3.45 µm Résolution 12 MP Monture C-mount Format du capteur 1.1\" min. Distance de travail 100 mm Gamme de longueurs d'onde Visible Fabricant Basler"
+}

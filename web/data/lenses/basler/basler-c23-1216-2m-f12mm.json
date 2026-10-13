@@ -1,0 +1,18 @@
+{
+  "id": "basler-c23-1216-2m-f12mm",
+  "brand": "Basler",
+  "model": "C23-1216-2M f12mm",
+  "sourceUrl": "https://www.baslerweb.com/fr-fr/shop/basler-lens-c23-1216-2m-f12mm/",
+  "focalLengthMm": 12.0,
+  "mount": "C-mount",
+  "sensorFormat": "2/3\"",
+  "maxSensorDiagonalMm": 2.0,
+  "apertureMin": 1.6,
+  "apertureMax": 16.0,
+  "minFocusDistanceMm": null,
+  "minWorkingDistanceMm": 100.0,
+  "recommendedWorkingDistanceMm": null,
+  "lensType": "Standard",
+  "opticalResolutionMp": 2.0,
+  "notes": "Numéro de commande: 2200000179\nLigne de produits: Standard\nGarantie: 36 mois\nType d'iris: manual\nFiltre IR Cut: Non\nPixel Pitch: 5.5 µm\nGamme de longueurs d'onde: Visible\n\nTexte source:\nInformations générales Numéro de commande 2200000179 Fabricant Basler Type Lens Type d'objectif Fixed Focal Lens Ligne de produits Standard Garantie 36 mois Données sur les lentilles Distance focale 12 mm Iris F1.6 - F16 Type d'iris manual Filtre IR Cut Non Pixel Pitch 5.5 µm Résolution 2 MP Monture C-mount Format du capteur 2/3\" min. Distance de travail 100 mm Gamme de longueurs d'onde Visible Fabricant Basler"
+}

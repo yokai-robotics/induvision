@@ -1,0 +1,23 @@
+{
+  "id": "allied-vision-alvium-g1-240",
+  "brand": "Allied Vision",
+  "model": "Alvium G1-240",
+  "sourceUrl": "https://www.alliedvision.com/en/products/area-scan-cameras/alvium/alvium-g1/view/1215",
+  "cameraType": "Area scan",
+  "sensorTechnology": "CMOS",
+  "colorMode": "Couleur",
+  "sensorFormat": "1/2.3\"",
+  "sensorSupplier": "Sony",
+  "sensorModel": "IMX392",
+  "resolutionWidth": 1936,
+  "resolutionHeight": 1216,
+  "sensorWidthMm": 6.68,
+  "sensorHeightMm": 4.2,
+  "pixelSizeUm": 3.45,
+  "maxFps": 50.0,
+  "interfaceType": "GigE",
+  "shutter": "",
+  "lensMount": "C-Mount",
+  "bitDepth": "",
+  "exposureRange": ""
+}

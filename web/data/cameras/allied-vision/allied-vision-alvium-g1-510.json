@@ -1,0 +1,23 @@
+{
+  "id": "allied-vision-alvium-g1-510",
+  "brand": "Allied Vision",
+  "model": "Alvium G1-510",
+  "sourceUrl": "https://www.alliedvision.com/en/products/area-scan-cameras/alvium/alvium-g1/view/1210?variant=6155",
+  "cameraType": "Area scan",
+  "sensorTechnology": "CMOS",
+  "colorMode": "Couleur",
+  "sensorFormat": "1/1.8\"",
+  "sensorSupplier": "Sony",
+  "sensorModel": "IMX548",
+  "resolutionWidth": 2464,
+  "resolutionHeight": 2064,
+  "sensorWidthMm": 6.7075,
+  "sensorHeightMm": 5.6115,
+  "pixelSizeUm": 2.74,
+  "maxFps": 23.0,
+  "interfaceType": "GigE",
+  "shutter": "Global shutter",
+  "lensMount": "C-Mount",
+  "bitDepth": "",
+  "exposureRange": ""
+}

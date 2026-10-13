@@ -1,0 +1,23 @@
+{
+  "id": "basler-ace-2-a2a2448-75umpro",
+  "brand": "Basler",
+  "model": "ace 2 a2A2448-75umPRO",
+  "cameraType": "Area scan",
+  "sensorTechnology": "CMOS",
+  "colorMode": "Monochrome",
+  "sensorFormat": "2/3\"",
+  "sensorSupplier": "Sony",
+  "sensorModel": "IMX264",
+  "resolutionWidth": 2448,
+  "resolutionHeight": 2048,
+  "sensorWidthMm": 8.45,
+  "sensorHeightMm": 7.07,
+  "pixelSizeUm": 3.45,
+  "maxFps": 75.0,
+  "interfaceType": "USB3 Vision",
+  "shutter": "Global shutter",
+  "lensMount": "C-mount",
+  "bitDepth": "8 / 10 / 12 bits",
+  "exposureRange": "20 us - 10 s",
+  "notes": "Bon compromis résolution/cadence pour contrôle dimensionnel."
+}

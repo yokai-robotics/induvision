@@ -1,0 +1,18 @@
+{
+  "id": "kowa-lm25hc",
+  "brand": "Kowa",
+  "model": "LM25HC",
+  "focalLengthMm": 25.0,
+  "mount": "C-mount",
+  "sensorFormat": "2/3\"",
+  "maxSensorDiagonalMm": 11.0,
+  "apertureMin": 1.4,
+  "apertureMax": 16.0,
+  "minFocusDistanceMm": 150.0,
+  "minWorkingDistanceMm": 150.0,
+  "recommendedWorkingDistanceMm": 250.0,
+  "lensType": "Standard",
+  "opticalResolutionMp": 5.0,
+  "distortion": "< 0.1%",
+  "notes": "Objectif standard compact pour capteurs jusqu’au 2/3\"."
+}

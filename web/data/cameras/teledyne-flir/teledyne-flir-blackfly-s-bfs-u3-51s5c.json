@@ -1,0 +1,23 @@
+{
+  "id": "teledyne-flir-blackfly-s-bfs-u3-51s5c",
+  "brand": "Teledyne FLIR",
+  "model": "Blackfly S BFS-U3-51S5C",
+  "cameraType": "Area scan",
+  "sensorTechnology": "CMOS",
+  "colorMode": "Couleur",
+  "sensorFormat": "2/3\"",
+  "sensorSupplier": "Sony",
+  "sensorModel": "IMX264",
+  "resolutionWidth": 2448,
+  "resolutionHeight": 2048,
+  "sensorWidthMm": 8.45,
+  "sensorHeightMm": 7.07,
+  "pixelSizeUm": 3.45,
+  "maxFps": 75.0,
+  "interfaceType": "USB3 Vision",
+  "shutter": "Global shutter",
+  "lensMount": "C-mount",
+  "bitDepth": "8 / 12 bits",
+  "exposureRange": "10 us - 30 s",
+  "notes": "Version couleur adaptée aux contrôles d’aspect."
+}
