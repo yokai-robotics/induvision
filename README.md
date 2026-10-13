@@ -29,5 +29,6 @@ let you keep a backup or move them to another device.
 The interface is available in French and English. Use the FR / EN selector to
 switch languages; your choice is remembered in your browser.
 
-Run `npm run build` from the project root to generate the static site in
-`out/oqjljzdba7/`.
+Set `EXPORT_PATH` in `.env` and run `just build` from the project root. Relative
+paths resolve from the project root, and the preview server reads the same
+variable. When running npm commands directly, set `EXPORT_PATH` in the shell.

@@ -6,7 +6,7 @@
     "predev": "npm run catalog:build",
     "dev": "next dev",
     "catalog:build": "node scripts/catalog.mjs",
-    "prebuild": "npm run catalog:build",
+    "prebuild": "node scripts/check-export-path.mjs && npm run catalog:build",
     "build": "next build",
     "postbuild": "node scripts/export.mjs",
     "start": "node scripts/serve.mjs",
